@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/UPractice.Api/UPractice.Api.csproj" />
+    <Project Path="src/UPractice.Application/UPractice.Application.csproj" />
+    <Project Path="src/UPractice.Domain/UPractice.Domain.csproj" />
+    <Project Path="src/UPractice.Infrastructure/UPractice.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/UPractice.Tests/UPractice.Tests.csproj" />
+  </Folder>
+</Solution>
