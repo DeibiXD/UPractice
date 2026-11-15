@@ -4,7 +4,7 @@ using UPractice.Domain.Excepciones;
 namespace UPractice.Domain.Reglas;
 
 /// <summary>
-/// Máquina de estados de la vacante (§3.6 del diseño). La condición "empresa habilitada"
+/// Máquina de estados de la vacante (S3.6 del diseño). La condición "empresa habilitada"
 /// para publicar la revisa el handler (422 EMPRESA_NO_HABILITADA).
 /// </summary>
 public static class TransicionesVacante

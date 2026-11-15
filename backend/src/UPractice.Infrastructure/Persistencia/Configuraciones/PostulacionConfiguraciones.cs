@@ -14,7 +14,7 @@ internal sealed class PostulacionConfiguracion : IEntityTypeConfiguration<Postul
         b.Property(x => x.Estado).HasConversion<string>().HasMaxLength(20);
 
         b.HasOne(x => x.Empresa).WithMany().HasForeignKey(x => x.EmpresaId);
-        // FK compuesta: el EmpresaId de la postulación siempre es el de su vacante (§3.7).
+        // FK compuesta: el EmpresaId de la postulación siempre es el de su vacante (S3.7).
         b.HasOne(x => x.Vacante).WithMany(v => v.Postulaciones)
             .HasForeignKey(x => new { x.VacanteId, x.EmpresaId })
             .HasPrincipalKey(v => new { v.Id, v.EmpresaId });

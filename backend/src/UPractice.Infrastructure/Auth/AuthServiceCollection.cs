@@ -6,10 +6,12 @@ namespace UPractice.Infrastructure.Auth;
 
 internal static class AuthServiceCollection
 {
-    // T-03: registrar generador JWE e ICurrentUser.
+    // ICurrentUser lo registra la Api (lee el HttpContext); aquí van el hash, las claves y el generador del token.
     internal static IServiceCollection AddAuth(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddSingleton(OpcionesJwt.Desde(configuration));
         services.AddSingleton<IHasherPassword, HasherPassword>();
+        services.AddSingleton<IGeneradorToken, GeneradorJwt>();
         return services;
     }
 }

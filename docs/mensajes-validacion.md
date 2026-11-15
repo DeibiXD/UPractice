@@ -1,6 +1,6 @@
 # Mensajes de validación (FluentValidation ↔ Zod)
 
-> Fuente: §5.7 de `docs/fase-1/UPractice-Fase1.md`. Backend y frontend usan **el mismo texto, carácter por carácter**.
+> Fuente: S5.7 de `docs/fase-1/UPractice-Fase1.md`. Backend y frontend usan **el mismo texto, carácter por carácter**.
 > Si cambia un mensaje, se cambia aquí, en el validador de C# y en el esquema Zod en el mismo PR.
 
 ## Reglas sintácticas (se validan en los dos lados)
@@ -12,6 +12,8 @@
 | `correo` | Requerido, formato email, máx. 150 | "Ingrese un correo válido." |
 | `password` / `passwordNuevo` | 8–64, al menos 1 mayúscula, 1 minúscula y 1 número | "La contraseña debe tener 8 a 64 caracteres, con mayúscula, minúscula y número." |
 | `confirmarPassword` | Igual a `password` | "Las contraseñas no coinciden." |
+| `password` (login) | Requerido | "Ingrese su contraseña." |
+| `passwordActual` | Requerido | "Ingrese su contraseña actual." |
 | `rtn` | `^\d{14}$` | "El RTN debe tener 14 dígitos." |
 | `nombreComercial`, `razonSocial` | 2–150 | "Debe tener entre 2 y 150 caracteres." |
 | `sector` | 2–80 | "Debe tener entre 2 y 80 caracteres." |
@@ -45,6 +47,15 @@ Necesitan la base de datos o el usuario actual, así que el frontend no las repi
 - Unicidad de correo, RTN, postulación, siglas y dominio → `CORREO_EN_USO`, `RTN_EN_USO`, `POSTULACION_DUPLICADA`, `SIGLAS_EN_USO`, `DOMINIO_EN_USO`
 - Carrera elegible, perfil verificado, empresa habilitada, carreras permitidas → `CARRERA_NO_ELEGIBLE`, `PERFIL_NO_VERIFICADO`, `EMPRESA_NO_HABILITADA`, `CARRERA_NO_PERMITIDA`
 - Transiciones de estado, cupos y límite de CV → `TRANSICION_INVALIDA`, `SIN_CUPOS`, `LIMITE_CURRICULUMS`
+
+## Errores semánticos con campo (solo backend)
+
+Se devuelven como 400 en `errors`, igual que la validación sintáctica, para que el formulario los pinte en el campo:
+
+| Campo | Cuándo | Mensaje |
+|---|---|---|
+| `passwordActual` | La contraseña actual no coincide (`PUT /auth/password`) | "La contraseña actual no es correcta." |
+| `passwordNuevo` | La nueva es igual a la actual | "La nueva contraseña debe ser distinta de la actual." |
 
 ## Cómo se comprueba la simetría
 

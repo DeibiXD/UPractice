@@ -1,6 +1,6 @@
 namespace UPractice.Domain.Entidades;
 
-/// <summary>Versión del CV. El PDF vive en el almacenamiento; aquí solo la llave (§3.8).</summary>
+/// <summary>Versión del CV. El PDF vive en el almacenamiento; aquí solo la llave (S3.8).</summary>
 public class Curriculum
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();

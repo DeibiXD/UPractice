@@ -12,5 +12,5 @@ internal sealed class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbCon
     public AppDbContext CreateDbContext(string[] args)
         => new(new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql("Host=localhost;Database=upractice_diseno")
-            .Options);
+            .Options, new SinUsuario());
 }
