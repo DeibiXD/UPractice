@@ -1,6 +1,6 @@
-// Contratos de la API de UPractice (§5.6 de docs/fase-1/UPractice-Fase1.md, ERD v4).
+// Contratos de la API de UPractice (S5.6 de docs/fase-1/UPractice-Fase1.md, ERD v4).
 // El frontend los copia en frontend/src/shared/api/types.ts.
-// Si se cambia un DTO, se cambia aquí, en el diseño (§5) y en el record de C# en el mismo PR.
+// Si se cambia un DTO, se cambia aquí, en el diseño (S5) y en el record de C# en el mismo PR.
 
 // ===== Comunes =====
 export type Guid = string;

@@ -5,9 +5,9 @@ using UPractice.Domain.Entidades;
 namespace UPractice.Infrastructure.Persistencia;
 
 /// <summary>
-/// Contexto de EF Core. T-03 agrega aquí los filtros globales por tenant (HasQueryFilter, §3.3).
+/// Contexto de EF Core. Los filtros globales por tenant están en AppDbContext.Filtros.cs (S3.3).
 /// </summary>
-public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options), IAppDbContext
+public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options, ICurrentUser usuario) : DbContext(options), IAppDbContext
 {
     public DbSet<Universidad> Universidades => Set<Universidad>();
     public DbSet<Facultad> Facultades => Set<Facultad>();
@@ -32,6 +32,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        AplicarFiltrosGlobales(modelBuilder);
 
         // Nada se borra en cascada salvo lo configurado explícitamente (tablas puente de la vacante):
         // borrar una empresa, usuario o vacante con historial debe fallar, no arrastrar datos.

@@ -1,6 +1,6 @@
 namespace UPractice.Domain.Enums;
 
-/// <summary>Estados de la vacante (§3.6).</summary>
+/// <summary>Estados de la vacante (S3.6).</summary>
 public enum EstadoVacante
 {
     Borrador,

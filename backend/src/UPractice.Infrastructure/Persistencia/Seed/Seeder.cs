@@ -8,7 +8,7 @@ using UPractice.Domain.Enums;
 namespace UPractice.Infrastructure.Persistencia.Seed;
 
 /// <summary>
-/// Seed por ambiente (§2.2 del diseño). Es idempotente: se puede correr en cada arranque.
+/// Seed por ambiente (S2.2 del diseño). Es idempotente: se puede correr en cada arranque.
 /// - Siempre: catálogo de habilidades y el primer SuperAdmin (Seed:SuperAdminCorreo / Seed:SuperAdminPassword).
 /// - Solo si Seed:Demo = true: universidades, coordinadores, empresas aprobadas, estudiantes y vacantes de ejemplo.
 /// </summary>

@@ -1,7 +1,7 @@
 namespace UPractice.Domain.Excepciones;
 
 /// <summary>
-/// Códigos de error de negocio (§5.4 del diseño). El frontend los recibe en el campo <c>code</c>
+/// Códigos de error de negocio (S5.4 del diseño). El frontend los recibe en el campo <c>code</c>
 /// del ProblemDetails, así que el texto debe coincidir exactamente. Usar siempre estas constantes,
 /// nunca escribir el código a mano en un handler.
 /// </summary>

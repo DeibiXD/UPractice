@@ -791,7 +791,7 @@ namespace UPractice.Infrastructure.Persistencia.Migraciones
                 table: "Vacantes",
                 columns: new[] { "Estado", "FechaCierre" });
 
-            // Nombre de habilidad único sin distinguir mayúsculas (§3.5).
+            // Nombre de habilidad único sin distinguir mayúsculas (S3.5).
             migrationBuilder.Sql("CREATE UNIQUE INDEX \"UX_Habilidades_NombreLower\" ON \"Habilidades\" (lower(\"Nombre\"));");
         }
 

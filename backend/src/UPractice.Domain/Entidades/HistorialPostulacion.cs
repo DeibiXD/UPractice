@@ -2,7 +2,7 @@ using UPractice.Domain.Enums;
 
 namespace UPractice.Domain.Entidades;
 
-/// <summary>Cada transición de la postulación (§3.6). La fecha del último cambio se calcula de aquí (D-23).</summary>
+/// <summary>Cada transición de la postulación (S3.6). La fecha del último cambio se calcula de aquí (D-23).</summary>
 public class HistorialPostulacion : IEntidadTenant
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();

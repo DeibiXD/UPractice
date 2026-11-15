@@ -8,7 +8,7 @@ namespace UPractice.Infrastructure.Persistencia;
 public static class InicializacionBaseDatos
 {
     /// <summary>
-    /// Si Db:AplicarMigraciones = true, aplica las migraciones pendientes y corre el seed (§2.2).
+    /// Si Db:AplicarMigraciones = true, aplica las migraciones pendientes y corre el seed (S2.2).
     /// En Render se deja en true para que cada despliegue actualice la BD sola.
     /// </summary>
     public static async Task InicializarBaseDatosAsync(this IServiceProvider servicios, IConfiguration configuration, CancellationToken ct = default)
