@@ -11,6 +11,22 @@ namespace UPractice.Api.Controllers;
 [Produces("application/json")]
 public sealed class AuthController : ControllerBase
 {
+    /// <summary>Registra una cuenta de estudiante y devuelve una sesión lista para usar.</summary>
+    [HttpPost("registro/estudiante")]
+    [AllowAnonymous]
+    [ProducesResponseType<LoginResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status422UnprocessableEntity)]
+    public async Task<ActionResult<LoginResponse>> RegistrarEstudiante(
+        RegistroEstudianteRequest request,
+        [FromServices] RegistroEstudianteHandler handler,
+        CancellationToken ct)
+    {
+        var respuesta = await handler.EjecutarAsync(request, ct);
+        return Created("/api/v1/auth/me", respuesta);
+    }
+
     /// <summary>Inicia sesión y devuelve el token cifrado y los datos del usuario.</summary>
     [HttpPost("login")]
     [AllowAnonymous]
@@ -22,6 +38,7 @@ public sealed class AuthController : ControllerBase
 
     /// <summary>Datos del usuario actual (el frontend no puede leer el token).</summary>
     [HttpGet("me")]
+    [Authorize]
     [PermitirPasswordTemporal]
     [ProducesResponseType<UsuarioActualDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]

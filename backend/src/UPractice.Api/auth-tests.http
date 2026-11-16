@@ -1,0 +1,84 @@
+@baseUrl = http://localhost:5294
+@correoNuevo = estudiante.prueba@unah.hn
+@passwordNuevo = Estudiante-2026
+
+### Universidades activas
+GET {{baseUrl}}/api/v1/catalogos/universidades
+
+### Registro exitoso: estudiante de UNAH (usar una vez en una base limpia)
+POST {{baseUrl}}/api/v1/auth/registro/estudiante
+Content-Type: application/json
+
+{
+  "nombre1": "Elena",
+  "nombre2": "María",
+  "apellido1": "Prueba",
+  "apellido2": "Backend",
+  "correo": "{{correoNuevo}}",
+  "password": "{{passwordNuevo}}",
+  "confirmarPassword": "{{passwordNuevo}}"
+}
+
+### Rechazo: correo sin dominio institucional (422 CORREO_NO_INSTITUCIONAL)
+POST {{baseUrl}}/api/v1/auth/registro/estudiante
+Content-Type: application/json
+
+{
+  "nombre1": "Elena",
+  "apellido1": "Prueba",
+  "correo": "elena@noinstitucional.test",
+  "password": "{{passwordNuevo}}",
+  "confirmarPassword": "{{passwordNuevo}}"
+}
+
+### Rechazo: universidad inactiva (422 CORREO_NO_INSTITUCIONAL)
+POST {{baseUrl}}/api/v1/auth/registro/estudiante
+Content-Type: application/json
+
+{
+  "nombre1": "Elena",
+  "apellido1": "Prueba",
+  "correo": "elena@inactiva.test",
+  "password": "{{passwordNuevo}}",
+  "confirmarPassword": "{{passwordNuevo}}"
+}
+
+### Rechazo: correo duplicado (409 CORREO_EN_USO)
+POST {{baseUrl}}/api/v1/auth/registro/estudiante
+Content-Type: application/json
+
+{
+  "nombre1": "Elena",
+  "nombre2": "María",
+  "apellido1": "Prueba",
+  "apellido2": "Backend",
+  "correo": "{{correoNuevo}}",
+  "password": "{{passwordNuevo}}",
+  "confirmarPassword": "{{passwordNuevo}}"
+}
+
+### Login exitoso
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "correo": "{{correoNuevo}}",
+  "password": "{{passwordNuevo}}"
+}
+
+> {%
+  client.global.set("token", response.body.accessToken);
+%}
+
+### Login fallido (401 con mensaje genérico)
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "correo": "nadie@unah.hn",
+  "password": "Incorrecta-2026"
+}
+
+### Perfil del usuario autenticado
+GET {{baseUrl}}/api/v1/auth/me
+Authorization: Bearer {{token}}
