@@ -13,7 +13,7 @@ internal sealed partial class Seeder
 {
     private async Task SembrarDemoAsync(CancellationToken ct)
     {
-        if (await db.Universidades.AnyAsync(ct)) return;
+        if (await db.Usuarios.AnyAsync(u => u.Correo == "ana.lopez@unah.hn", ct)) return;
 
         var password = configuration["Seed:DemoPassword"];
         if (string.IsNullOrWhiteSpace(password))
@@ -26,8 +26,8 @@ internal sealed partial class Seeder
         var ahora = DateTime.UtcNow;
 
         // ----- Universidades, facultades y carreras -----
-        var unah = new Universidad { Nombre = "Universidad Nacional Autónoma de Honduras", Siglas = "UNAH", DominioCorreo = "unah.hn" };
-        var unitec = new Universidad { Nombre = "Universidad Tecnológica Centroamericana", Siglas = "UNITEC", DominioCorreo = "unitec.edu" };
+        var unah = await db.Universidades.SingleAsync(u => u.DominioCorreo == "unah.hn", ct);
+        var unitec = await db.Universidades.SingleAsync(u => u.DominioCorreo == "unitec.edu", ct);
 
         var sistemasUnah = new Carrera { Nombre = "Ingeniería en Sistemas" };
         var industrialUnah = new Carrera { Nombre = "Ingeniería Industrial" };
@@ -41,8 +41,7 @@ internal sealed partial class Seeder
         var finanzasUnitec = new Carrera { Nombre = "Licenciatura en Finanzas" };
         unitec.Facultades.Add(new Facultad { Nombre = "Facultad de Ingeniería", Carreras = { sistemasUnitec, industrialUnitec } });
         unitec.Facultades.Add(new Facultad { Nombre = "Facultad de Ciencias Administrativas", Carreras = { finanzasUnitec } });
-        db.Universidades.AddRange(unah, unitec);
-
+        db.Facultades.AddRange(unah.Facultades.Concat(unitec.Facultades));
         // ----- Coordinadores -----
         var coordUnah = Cuenta("coordinacion@unah.hn", "María", "José", "Rivera", "Cruz", Rol.Coordinador, universidad: unah);
         var coordUnitec = Cuenta("coordinacion@unitec.edu", "Carlos", null, "Mejía", "Paz", Rol.Coordinador, universidad: unitec);

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UPractice.Application.Abstracciones;
+using UPractice.Application.Features.Empresa.Habilitaciones;
 using UPractice.Domain.Excepciones;
 
 namespace UPractice.Tests.Infraestructura;
@@ -23,4 +24,13 @@ public sealed class PruebasController(IAppDbContext db) : ControllerBase
 
     [HttpGet("postulaciones")]
     public Task<List<Guid>> Postulaciones() => db.Postulaciones.Select(p => p.Id).ToListAsync();
+
+    [HttpPost("publicar")]
+    public async Task<IActionResult> ValidarPublicacion(
+        [FromServices] IEmpresaPublicacionGuard guard,
+        CancellationToken ct)
+    {
+        await guard.ValidarPuedePublicarAsync(ct);
+        return NoContent();
+    }
 }

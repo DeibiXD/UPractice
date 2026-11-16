@@ -23,13 +23,17 @@ internal sealed class GeneradorJwt(OpcionesJwt opciones) : IGeneradorToken
         var claims = new Dictionary<string, object>
         {
             [JwtRegisteredClaimNames.Sub] = usuario.Id.ToString(),
-            [JwtRegisteredClaimNames.Email] = usuario.Correo,
-            [JwtRegisteredClaimNames.Name] = usuario.NombreCompleto,
             ["role"] = usuario.Rol.ToString(),
         };
+        if (usuario.Rol != UPractice.Domain.Enums.Rol.Estudiante)
+        {
+            claims[JwtRegisteredClaimNames.Email] = usuario.Correo;
+            claims[JwtRegisteredClaimNames.Name] = usuario.NombreCompleto;
+        }
         if (usuario.EmpresaId is { } empresaId) claims[ClaimEmpresa] = empresaId.ToString();
         if (usuario.UniversidadId is { } universidadId) claims[ClaimUniversidad] = universidadId.ToString();
-        if (usuario.DebeCambiarPassword) claims[ClaimPasswordTemporal] = true;
+        if (usuario.DebeCambiarPassword && usuario.Rol != UPractice.Domain.Enums.Rol.Estudiante)
+            claims[ClaimPasswordTemporal] = true;
 
         var token = Handler.CreateToken(new SecurityTokenDescriptor
         {

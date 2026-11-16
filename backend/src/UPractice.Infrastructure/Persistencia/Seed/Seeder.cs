@@ -24,9 +24,38 @@ internal sealed partial class Seeder(AppDbContext db, IHasherPassword hasher, IC
     public async Task EjecutarAsync(CancellationToken ct = default)
     {
         await SembrarHabilidadesAsync(ct);
+        await SembrarUniversidadesAsync(ct);
         await SembrarSuperAdminAsync(ct);
         if (configuration.GetValue<bool>("Seed:Demo"))
             await SembrarDemoAsync(ct);
+    }
+
+    private async Task SembrarUniversidadesAsync(CancellationToken ct)
+    {
+        if (await db.Universidades.AnyAsync(ct)) return;
+
+        db.Universidades.AddRange(
+            new Universidad
+            {
+                Nombre = "Universidad Nacional Autónoma de Honduras",
+                Siglas = "UNAH",
+                DominioCorreo = "unah.hn",
+            },
+            new Universidad
+            {
+                Nombre = "Universidad Tecnológica Centroamericana",
+                Siglas = "UNITEC",
+                DominioCorreo = "unitec.edu",
+            },
+            new Universidad
+            {
+                Nombre = "Universidad de Prueba Inactiva",
+                Siglas = "UPI",
+                DominioCorreo = "inactiva.test",
+                Activa = false,
+            });
+        await db.SaveChangesAsync(ct);
+        logger.LogInformation("Catálogo inicial de universidades cargado.");
     }
 
     private async Task SembrarHabilidadesAsync(CancellationToken ct)

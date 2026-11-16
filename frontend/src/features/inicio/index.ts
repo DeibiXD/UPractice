@@ -1,0 +1,1 @@
+export { rutasPrivadas } from './routes'

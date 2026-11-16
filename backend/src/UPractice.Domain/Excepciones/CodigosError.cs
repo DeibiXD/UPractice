@@ -10,6 +10,7 @@ public static class CodigosError
     // ----- 409 · ConflictoException -----
     public const string CorreoEnUso = "CORREO_EN_USO";
     public const string RtnEnUso = "RTN_EN_USO";
+    public const string HabilitacionEnCurso = "HABILITACION_EN_CURSO";
     public const string PostulacionDuplicada = "POSTULACION_DUPLICADA";
     public const string SiglasEnUso = "SIGLAS_EN_USO";
     public const string DominioEnUso = "DOMINIO_EN_USO";

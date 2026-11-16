@@ -17,7 +17,7 @@ public static class SwaggerConfiguracion
             {
                 Type = SecuritySchemeType.Http,
                 Scheme = "bearer",
-                BearerFormat = "JWE",
+                BearerFormat = "JWT",
                 Description = "Pegue solo el accessToken (sin la palabra Bearer).",
             };
             documento.Security ??= [];
