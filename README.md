@@ -8,12 +8,12 @@ Proyecto final · Plataforma Web SaaS Multi-empresa.
 
 | Documento | Contenido |
 |---|---|
-| [Diseño de la Fase 1](docs/fase-1/UPractice-Fase1.md) | Roles, decisiones (D-01 a D-23), modelo multi-tenant, máquinas de estado, historias de usuario y contratos de la API. **Fuente de verdad.** |
-| [Pitch](docs/fase-1/pitch.pdf) · [texto](docs/fase-1.md) | Pitch de una página. |
-| [ERD v4 (Mermaid)](docs/diagrama-mermaid.md) · [imagen v3](docs/DiagramaV3.png) | Diagrama entidad-relación en 3FN. La fuente es el Mermaid; la imagen se exporta desde mermaid.live. |
+| [Diseño de la Fase 1](docs/FASES/UPractice-Fase1.md) | Roles, historias, reglas y diseño inicial. Esta copia contiene D-01 a D-18; para el modelo y los DTO actuales, consultar el ERD y los contratos vigentes. |
+| [Pitch](<docs/Documentos - UPractice/pitch.pdf>) | Pitch de una página. |
+| [ERD v4 (Mermaid)](docs/diagrama-mermaid.md) · [imagen](<docs/diagrama 4.png>) | Diagrama entidad-relación en 3FN. La fuente es el Mermaid; la imagen se exporta desde mermaid.live. |
 | [Contratos TypeScript](docs/contratos/api-types.ts) | DTO de S5.6, listos para `frontend/src/shared/api/types.ts`. |
 | [Mensajes de validación](docs/mensajes-validacion.md) | Textos idénticos para FluentValidation y Zod. |
-| [Lineamientos del curso](docs/fase-1/Lineamientos-del-curso.md) | Requisitos oficiales. Si algo choca con ellos, mandan los lineamientos. |
+| [Lineamientos del curso](docs/FASES/Lineamientos-del-curso.md) | Requisitos oficiales. Si algo choca con ellos, mandan los lineamientos. |
 | [Tablero Kanban](https://github.com/users/DeibiXD/projects/3) | Historias de usuario y tareas por sprint. |
 
 ## Stack
