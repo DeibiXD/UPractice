@@ -1,0 +1,53 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "react",
+    "typescript",
+    "oxc"
+  ],
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/only-export-components": [
+      "warn",
+      {
+        "allowConstantExport": true
+      }
+    ],
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": [
+              "@/features/*/**"
+            ],
+            "message": "Una feature no importa archivos internos de otra: importe desde '@/features/<nombre>' (su index.ts) o mueva lo compartido a src/shared."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/shared/**/*.ts",
+        "src/shared/**/*.tsx"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/features/*"
+                ],
+                "message": "src/shared no puede depender de features."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
