@@ -54,6 +54,8 @@ En desarrollo (`appsettings.Development.json`) el seed carga datos de demostraci
 
 **Pruebas:** `dotnet test tests/UPractice.Tests`. Usan Testcontainers (necesitan Docker abierto) o, si existe la variable `PRUEBAS_POSTGRES`, un PostgreSQL existente, donde crean una base temporal y la borran al terminar. Incluyen la prueba obligatoria de aislamiento entre empresas (`AislamientoTests`).
 
+**HU-E03 (backend):** `POST /api/v1/empresa/vacantes` permite crear borradores y publicar con carreras habilitadas para la empresa autenticada. La [guía de prueba](docs/pruebas/HU-E03.md) explica cómo obtener IDs del seed, enviar solicitudes en Swagger y comprobar las respuestas. Los catálogos GET y el panel de HU-E04 se integran por separado.
+
 ### Si Windows bloquea la API ("An application control policy has blocked this file")
 
 Smart App Control de Windows 11 bloquea los programas sin firma que compila Rider. Se corre todo dentro de Docker, sin cambiar la seguridad del equipo (PowerShell, desde `backend`):

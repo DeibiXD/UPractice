@@ -31,6 +31,10 @@
 | `indiceMinimo` | Opcional, 0–100 | "El índice mínimo debe estar entre 0 y 100." |
 | `fechaCierre` | Posterior a hoy (hora de Honduras) | "La fecha de cierre debe ser posterior a hoy." |
 | `carrerasIds` | Mínimo 1 | "Seleccione al menos una carrera." |
+| `carrerasIds` (HU-E03) | IDs no vacíos | "Seleccione carreras válidas y activas." |
+| `carrerasIds` (HU-E03) | Sin IDs repetidos | "No repita carreras." |
+| `habilidades` (HU-E03) | Lista no nula, elementos e IDs no vacíos; puede estar vacía | "Seleccione habilidades válidas." |
+| `habilidades` (HU-E03) | Sin IDs de habilidad repetidos | "No repita habilidades." |
 | `comentario` (estado) | Opcional, máx. 500 | "Máximo 500 caracteres." |
 | `motivoRechazo` | Obligatorio si `aprobar = false`, 10–500 | "Indique el motivo (10 a 500 caracteres)." |
 | `observacion` (verificación) | Obligatoria si `aprobar = false`, 10–500 | "Indique la observación (10 a 500 caracteres)." |
@@ -56,6 +60,15 @@ Se devuelven como 400 en `errors`, igual que la validación sintáctica, para qu
 |---|---|---|
 | `passwordActual` | La contraseña actual no coincide (`PUT /auth/password`) | "La contraseña actual no es correcta." |
 | `passwordNuevo` | La nueva es igual a la actual | "La nueva contraseña debe ser distinta de la actual." |
+| `carrerasIds` (HU-E03) | Carrera inexistente/inactiva o universidad inactiva | "Seleccione carreras válidas y activas." |
+| `habilidades` (HU-E03) | Una habilidad no existe | "Seleccione habilidades válidas." |
+
+En HU-E03, título, descripción y ubicación se validan y guardan sin espacios exteriores.
+Los campos `modalidad`, `remunerada`, `publicar` y el indicador `esRequerida` de cada habilidad
+deben enviarse explícitamente; su omisión
+se reporta mediante el formato 400 de JSON/ModelState de la API.
+El índice mínimo conserva el rango 0–100; la respuesta devuelve el valor persistido
+con la precisión de la columna `numeric(5,2)`, igual que los timestamps guardados en UTC.
 
 ## Cómo se comprueba la simetría
 

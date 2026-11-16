@@ -442,3 +442,9 @@ dist/
 
 # Archivos subidos en desarrollo
 backend/storage/
+
+/docs
+
+.codex
+
+AGENTS.md

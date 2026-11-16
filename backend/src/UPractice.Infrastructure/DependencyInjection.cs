@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using UPractice.Infrastructure.Almacenamiento;
 using UPractice.Infrastructure.Auth;
 using UPractice.Infrastructure.Persistencia;
+using UPractice.Infrastructure.Tiempo;
 
 namespace UPractice.Infrastructure;
 
@@ -16,5 +17,6 @@ public static class DependencyInjection
         => services
             .AddPersistencia(configuration)
             .AddAuth(configuration)
+            .AddTiempo()
             .AddAlmacenamiento(configuration);
 }
