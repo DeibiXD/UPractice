@@ -1,9 +1,103 @@
 @baseUrl = http://localhost:5294
 @correoNuevo = estudiante.prueba@unah.hn
 @passwordNuevo = Estudiante-2026
+@correoEmpresa = empresa.prueba@ejemplo.hn
+@passwordEmpresa = Empresa-Prueba-2026
+@rtnEmpresa = 08019020261111
+@universidadId = REEMPLAZAR-CON-UN-GUID-DEL-CATALOGO
+@universidadNuevaId = REEMPLAZAR-CON-OTRO-GUID-ACTIVO
+@correoSuperAdmin = admin@upractice.app
+@passwordSuperAdmin = REEMPLAZAR-CON-EL-SEED-SUPERADMIN
+@passwordSuperAdminNuevo = Admin-Actualizada2026
+@nombreUniversidad = Universidad de ejemplo
+@siglasUniversidad = EJEMPLO
+@dominioUniversidad = ejemplo.edu.hn
 
 ### Universidades activas
 GET {{baseUrl}}/api/v1/catalogos/universidades
+
+### Registro público de empresa + AdminEmpresa + solicitud inicial (201)
+POST {{baseUrl}}/api/v1/auth/registro/empresa
+Content-Type: application/json
+
+{
+  "nombreComercial": "Empresa de prueba",
+  "razonSocial": "Empresa de prueba S. de R.L.",
+  "rtn": "{{rtnEmpresa}}",
+  "sector": "Tecnología",
+  "universidadesIds": ["{{universidadId}}"],
+  "admin": {
+    "nombre1": "María",
+    "apellido1": "Prueba",
+    "correo": "{{correoEmpresa}}",
+    "password": "{{passwordEmpresa}}",
+    "confirmarPassword": "{{passwordEmpresa}}"
+  }
+}
+
+> {%
+  client.global.set("tokenEmpresa", response.body.accessToken);
+%}
+
+### Registro de empresa inválido (400: RTN y universidad)
+POST {{baseUrl}}/api/v1/auth/registro/empresa
+Content-Type: application/json
+
+{
+  "nombreComercial": "Empresa inválida",
+  "razonSocial": "Empresa inválida S. de R.L.",
+  "rtn": "123",
+  "sector": "Tecnología",
+  "universidadesIds": [],
+  "admin": {
+    "nombre1": "María",
+    "apellido1": "Prueba",
+    "correo": "invalida@ejemplo.test",
+    "password": "{{passwordEmpresa}}",
+    "confirmarPassword": "{{passwordEmpresa}}"
+  }
+}
+
+### RTN duplicado (409 RTN_EN_USO)
+POST {{baseUrl}}/api/v1/auth/registro/empresa
+Content-Type: application/json
+
+{
+  "nombreComercial": "Empresa duplicada",
+  "razonSocial": "Empresa duplicada S. de R.L.",
+  "rtn": "{{rtnEmpresa}}",
+  "sector": "Tecnología",
+  "universidadesIds": ["{{universidadId}}"],
+  "admin": {
+    "nombre1": "María",
+    "apellido1": "Prueba",
+    "correo": "duplicada@ejemplo.test",
+    "password": "{{passwordEmpresa}}",
+    "confirmarPassword": "{{passwordEmpresa}}"
+  }
+}
+
+### Consultar habilitaciones de la empresa autenticada (200)
+GET {{baseUrl}}/api/v1/empresa/habilitaciones
+Authorization: Bearer {{tokenEmpresa}}
+
+### Solicitar habilitación de otra universidad (201)
+POST {{baseUrl}}/api/v1/empresa/habilitaciones
+Authorization: Bearer {{tokenEmpresa}}
+Content-Type: application/json
+
+{
+  "universidadId": "{{universidadNuevaId}}"
+}
+
+### Solicitud repetida (409 HABILITACION_EN_CURSO)
+POST {{baseUrl}}/api/v1/empresa/habilitaciones
+Authorization: Bearer {{tokenEmpresa}}
+Content-Type: application/json
+
+{
+  "universidadId": "{{universidadNuevaId}}"
+}
 
 ### Registro exitoso: estudiante de UNAH (usar una vez en una base limpia)
 POST {{baseUrl}}/api/v1/auth/registro/estudiante
@@ -82,3 +176,88 @@ Content-Type: application/json
 ### Perfil del usuario autenticado
 GET {{baseUrl}}/api/v1/auth/me
 Authorization: Bearer {{token}}
+
+### Login SuperAdmin (la cuenta puede requerir cambio inicial de contraseña)
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "correo": "{{correoSuperAdmin}}",
+  "password": "{{passwordSuperAdmin}}"
+}
+
+> {%
+  client.global.set("tokenSuperAdminTemporal", response.body.accessToken);
+%}
+
+### Completar cambio de contraseña inicial del SuperAdmin
+PUT {{baseUrl}}/api/v1/auth/password
+Authorization: Bearer {{tokenSuperAdminTemporal}}
+Content-Type: application/json
+
+{
+  "passwordActual": "{{passwordSuperAdmin}}",
+  "passwordNuevo": "{{passwordSuperAdminNuevo}}",
+  "confirmarPassword": "{{passwordSuperAdminNuevo}}"
+}
+
+> {%
+  client.global.set("tokenSuperAdmin", response.body.accessToken);
+%}
+
+### Lista administrativa (activas e inactivas)
+GET {{baseUrl}}/api/v1/admin/universidades
+Authorization: Bearer {{tokenSuperAdmin}}
+
+### Crear universidad (201; las siglas y dominio se guardan normalizados)
+POST {{baseUrl}}/api/v1/admin/universidades
+Authorization: Bearer {{tokenSuperAdmin}}
+Content-Type: application/json
+
+{
+  "nombre": "{{nombreUniversidad}}",
+  "siglas": "{{siglasUniversidad}}",
+  "dominioCorreo": "{{dominioUniversidad}}"
+}
+
+### Conflicto de siglas (409 SIGLAS_EN_USO)
+POST {{baseUrl}}/api/v1/admin/universidades
+Authorization: Bearer {{tokenSuperAdmin}}
+Content-Type: application/json
+
+{
+  "nombre": "Otra universidad",
+  "siglas": "{{siglasUniversidad}}",
+  "dominioCorreo": "otro-dominio.edu.hn"
+}
+
+### Conflicto de dominio (409 DOMINIO_EN_USO)
+POST {{baseUrl}}/api/v1/admin/universidades
+Authorization: Bearer {{tokenSuperAdmin}}
+Content-Type: application/json
+
+{
+  "nombre": "Otra universidad",
+  "siglas": "OTRA123",
+  "dominioCorreo": "{{dominioUniversidad}}"
+}
+
+### Actualizar universidad (200; usar un id del listado)
+PUT {{baseUrl}}/api/v1/admin/universidades/{{universidadId}}
+Authorization: Bearer {{tokenSuperAdmin}}
+Content-Type: application/json
+
+{
+  "nombre": "Universidad actualizada",
+  "siglas": "{{siglasUniversidad}}",
+  "dominioCorreo": "{{dominioUniversidad}}"
+}
+
+### Desactivar universidad (200; usar un id del listado)
+PATCH {{baseUrl}}/api/v1/admin/universidades/{{universidadId}}/estado
+Authorization: Bearer {{tokenSuperAdmin}}
+Content-Type: application/json
+
+{
+  "activa": false
+}

@@ -15,6 +15,7 @@ internal static class PersistenciaServiceCollection
 
         services.AddDbContext<AppDbContext>(o => o.UseNpgsql(cadena));
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
+        services.AddScoped<IEmpresaHabilitacionRepository, EmpresaHabilitacionRepository>();
         services.AddScoped<Seeder>();
         return services;
     }

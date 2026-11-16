@@ -12,6 +12,7 @@ public sealed class CatalogosController : ControllerBase
 {
     /// <summary>Devuelve únicamente las universidades activas.</summary>
     [HttpGet("universidades")]
+    [EndpointSummary("Lista las universidades activas disponibles")]
     [AllowAnonymous]
     [ProducesResponseType<IReadOnlyList<UniversidadDto>>(StatusCodes.Status200OK)]
     public Task<IReadOnlyList<UniversidadDto>> Universidades(
