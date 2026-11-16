@@ -8,12 +8,12 @@ Proyecto final · Plataforma Web SaaS Multi-empresa.
 
 | Documento | Contenido |
 |---|---|
-| [Diseño de la Fase 1](docs/fase-1/UPractice-Fase1.md) | Roles, decisiones (D-01 a D-23), modelo multi-tenant, máquinas de estado, historias de usuario y contratos de la API. **Fuente de verdad.** |
-| [Pitch](docs/fase-1/pitch.pdf) · [texto](docs/fase-1.md) | Pitch de una página. |
-| [ERD v4 (Mermaid)](docs/diagrama-mermaid.md) · [imagen v3](docs/DiagramaV3.png) | Diagrama entidad-relación en 3FN. La fuente es el Mermaid; la imagen se exporta desde mermaid.live. |
+| [Diseño de la Fase 1](docs/FASES/UPractice-Fase1.md) | Roles, historias, reglas y diseño inicial. Esta copia contiene D-01 a D-18; para el modelo y los DTO actuales, consultar el ERD y los contratos vigentes. |
+| [Pitch](<docs/Documentos - UPractice/pitch.pdf>) | Pitch de una página. |
+| [ERD v4 (Mermaid)](docs/diagrama-mermaid.md) · [imagen](<docs/diagrama 4.png>) | Diagrama entidad-relación en 3FN. La fuente es el Mermaid; la imagen se exporta desde mermaid.live. |
 | [Contratos TypeScript](docs/contratos/api-types.ts) | DTO de S5.6, listos para `frontend/src/shared/api/types.ts`. |
 | [Mensajes de validación](docs/mensajes-validacion.md) | Textos idénticos para FluentValidation y Zod. |
-| [Lineamientos del curso](docs/fase-1/Lineamientos-del-curso.md) | Requisitos oficiales. Si algo choca con ellos, mandan los lineamientos. |
+| [Lineamientos del curso](docs/FASES/Lineamientos-del-curso.md) | Requisitos oficiales. Si algo choca con ellos, mandan los lineamientos. |
 | [Tablero Kanban](https://github.com/users/DeibiXD/projects/3) | Historias de usuario y tareas por sprint. |
 
 ## Stack
@@ -55,6 +55,8 @@ En desarrollo (`appsettings.Development.json`) el seed carga datos de demostraci
 El catálogo público está en `GET /api/v1/catalogos/universidades`. El registro de estudiantes se prueba en `POST /api/v1/auth/registro/estudiante`; un correo institucional recibe una sesión, los dominios no registrados o inactivos responden `422 CORREO_NO_INSTITUCIONAL` y los correos duplicados `409 CORREO_EN_USO`. La colección `src/UPractice.Api/auth-tests.http` contiene estos flujos y solicitudes para login y `/auth/me`.
 
 **Pruebas:** `dotnet test tests/UPractice.Tests`. Usan Testcontainers (necesitan Docker abierto) o, si existe la variable `PRUEBAS_POSTGRES`, un PostgreSQL existente, donde crean una base temporal y la borran al terminar. Incluyen la prueba obligatoria de aislamiento entre empresas (`AislamientoTests`).
+
+**HU-E03 (backend):** `POST /api/v1/empresa/vacantes` permite crear borradores y publicar con carreras habilitadas para la empresa autenticada. La [guía de prueba](docs/pruebas/HU-E03.md) explica cómo obtener IDs del seed, enviar solicitudes en Swagger y comprobar las respuestas. Los catálogos GET y el panel de HU-E04 se integran por separado.
 
 ### Si Windows bloquea la API ("An application control policy has blocked this file")
 

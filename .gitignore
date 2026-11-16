@@ -442,3 +442,10 @@ dist/
 
 # Archivos subidos en desarrollo
 backend/storage/
+
+# Archivos locales de Codex
+/.codex/
+/AGENTS.md
+
+# Análisis y memoria locales
+/docs/arquitectura/
