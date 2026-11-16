@@ -8,7 +8,8 @@ namespace UPractice.Infrastructure.Persistencia;
 /// Filtros globales (HasQueryFilter) que aíslan los datos de cada tenant (lineamiento de la Fase 2, S3.2 y S3.3).
 ///
 /// - Usuario de empresa: solo filas con EmpresaId = claim "empresa_id".
-/// - Estudiante: solo lo suyo (UsuarioId = "sub") y vacantes publicadas de empresas aprobadas en su universidad.
+/// - Estudiante: solo lo suyo (UsuarioId = "sub"), las vacantes publicadas de empresas aprobadas en su universidad
+///   y las vacantes a las que ya se postuló (aunque luego se pausen o cierren).
 /// - Coordinador: lo de los estudiantes de su universidad ("universidad_id").
 /// - SuperAdmin: solo HabilitacionesEmpresa (D-14).
 /// - Sin token: ninguna fila.
@@ -40,6 +41,10 @@ public sealed partial class AppDbContext
                 && v.Estado == EstadoVacante.Publicada
                 && v.Empresa.Activa
                 && v.Empresa.Habilitaciones.Any(h => h.UniversidadId == UniversidadActualId && h.Estado == EstadoHabilitacion.Aprobada))
+            // Postulacion.Vacante es una navegación obligatoria: si la vacante se pausa o se cierra y el filtro la oculta,
+            // EF descarta también la postulación y desaparece del panel del estudiante (HU-06). Por eso el estudiante
+            // sigue viendo las vacantes a las que se postuló. El catálogo (HU-04) debe filtrar Estado == Publicada a mano.
+            || (RolActual == Rol.Estudiante && Postulaciones.Any(p => p.VacanteId == v.Id && p.EstudianteId == UsuarioActualId))
             || (RolActual == Rol.Coordinador
                 && v.Empresa.Habilitaciones.Any(h => h.UniversidadId == UniversidadActualId)));
 
