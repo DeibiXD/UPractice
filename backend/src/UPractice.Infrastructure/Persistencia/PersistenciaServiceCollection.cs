@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using UPractice.Application.Abstracciones;
+using UPractice.Application.Features.Admin.Universidades.Interfaces;
 using UPractice.Infrastructure.Persistencia.Seed;
 
 namespace UPractice.Infrastructure.Persistencia;
@@ -15,6 +16,8 @@ internal static class PersistenciaServiceCollection
 
         services.AddDbContext<AppDbContext>(o => o.UseNpgsql(cadena));
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
+        services.AddScoped<IEmpresaHabilitacionRepository, EmpresaHabilitacionRepository>();
+        services.AddScoped<IUniversidadRepository, UniversidadRepository>();
         services.AddScoped<Seeder>();
         return services;
     }

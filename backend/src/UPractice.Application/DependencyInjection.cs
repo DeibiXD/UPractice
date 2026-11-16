@@ -1,6 +1,8 @@
 using System.Globalization;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using UPractice.Application.Abstracciones;
+using UPractice.Application.Features.Empresa.Habilitaciones;
 
 namespace UPractice.Application;
 
@@ -20,6 +22,7 @@ public static class DependencyInjection
         ValidatorOptions.Global.LanguageManager.Culture = new CultureInfo("es");
 
         services.AddValidatorsFromAssembly(assembly);
+        services.AddScoped<IEmpresaPublicacionGuard, EmpresaPublicacionGuard>();
 
         var handlers = assembly.GetTypes()
             .Where(t => t is { IsClass: true, IsAbstract: false } && t.Name.EndsWith("Handler", StringComparison.Ordinal));

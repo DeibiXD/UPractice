@@ -3,9 +3,12 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Tokens;
 using UPractice.Application.Abstracciones;
 using UPractice.Domain.Entidades;
 using UPractice.Domain.Enums;
+using UPractice.Infrastructure.Auth;
 using UPractice.Tests.Infraestructura;
 
 namespace UPractice.Tests;
@@ -14,6 +17,125 @@ namespace UPractice.Tests;
 [Collection(ColeccionApi.Nombre)]
 public sealed class AuthTests(ApiFixture api)
 {
+    [Fact]
+    public async Task Registro_crea_estudiante_asociado_y_rechaza_correo_duplicado()
+    {
+        var correo = $"registro.{Guid.NewGuid():N}@unah.hn";
+        var request = new
+        {
+            nombre1 = "Elena",
+            nombre2 = (string?)null,
+            apellido1 = "Prueba",
+            apellido2 = (string?)null,
+            correo,
+            password = "Estudiante-2026",
+            confirmarPassword = "Estudiante-2026",
+        };
+        var cliente = api.CreateClient();
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/v1/auth/registro/estudiante", request);
+
+        Assert.Equal(HttpStatusCode.Created, respuesta.StatusCode);
+        var json = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
+        var accessToken = json.GetProperty("accessToken").GetString()!;
+        Assert.False(string.IsNullOrWhiteSpace(accessToken));
+        Assert.Equal("Estudiante", json.GetProperty("usuario").GetProperty("rol").GetString());
+        Assert.Equal("UNAH", json.GetProperty("usuario").GetProperty("universidad").GetProperty("nombre").GetString());
+        var minutosRestantes = (json.GetProperty("expiraEn").GetDateTime() - DateTime.UtcNow).TotalMinutes;
+        Assert.InRange(minutosRestantes, 59, 60);
+
+        var jwt = new JsonWebTokenHandler { MapInboundClaims = false };
+        var opciones = api.Servicio<OpcionesJwt>();
+        var validacion = await jwt.ValidateTokenAsync(accessToken, new TokenValidationParameters
+        {
+            ValidIssuer = opciones.Issuer,
+            ValidAudience = opciones.Audience,
+            IssuerSigningKey = opciones.ClaveFirma,
+            TokenDecryptionKey = opciones.ClaveCifrado,
+            ClockSkew = TimeSpan.Zero,
+        });
+        Assert.True(validacion.IsValid, validacion.Exception?.Message);
+        Assert.Equal(
+            new[] { "role", "sub", "universidad_id" },
+            validacion.ClaimsIdentity.Claims
+                .Select(claim => claim.Type)
+                .Where(tipo => tipo is not ("aud" or "exp" or "iat" or "iss" or "nbf"))
+                .OrderBy(tipo => tipo));
+
+        var duplicado = await cliente.PostAsJsonAsync("/api/v1/auth/registro/estudiante", request);
+        Assert.Equal(HttpStatusCode.Conflict, duplicado.StatusCode);
+        Assert.Equal("CORREO_EN_USO",
+            (await duplicado.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+    }
+
+    [Theory]
+    [InlineData("estudiante@noinstitucional.test")]
+    [InlineData("estudiante@inactiva.test")]
+    public async Task Registro_rechaza_dominio_no_institucional_o_inactivo(string correo)
+    {
+        var respuesta = await api.CreateClient().PostAsJsonAsync("/api/v1/auth/registro/estudiante", new
+        {
+            nombre1 = "Elena",
+            apellido1 = "Prueba",
+            correo,
+            password = "Estudiante-2026",
+            confirmarPassword = "Estudiante-2026",
+        });
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, respuesta.StatusCode);
+        Assert.Equal("CORREO_NO_INSTITUCIONAL",
+            (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task Registro_valida_confirmacion_de_contrasena()
+    {
+        var respuesta = await api.CreateClient().PostAsJsonAsync("/api/v1/auth/registro/estudiante", new
+        {
+            nombre1 = "Elena",
+            apellido1 = "Prueba",
+            correo = $"confirmacion.{Guid.NewGuid():N}@unah.hn",
+            password = "Estudiante-2026",
+            confirmarPassword = "Otra-2026",
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        var errores = (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("errors");
+        Assert.Equal("Las contraseñas no coinciden.", errores.GetProperty("confirmarPassword")[0].GetString());
+    }
+
+    [Fact]
+    public async Task Catalogo_publico_solo_devuelve_universidades_activas()
+    {
+        var respuesta = await api.CreateClient().GetAsync("/api/v1/catalogos/universidades");
+
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        var universidades = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Contains(universidades.EnumerateArray(),
+            universidad => universidad.GetProperty("dominioCorreo").GetString() == "unah.hn");
+        Assert.DoesNotContain(universidades.EnumerateArray(),
+            universidad => universidad.GetProperty("dominioCorreo").GetString() == "inactiva.test");
+    }
+
+    [Fact]
+    public async Task Me_sin_token_devuelve_401()
+    {
+        var respuesta = await api.CreateClient().GetAsync("/api/v1/auth/me");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, respuesta.StatusCode);
+    }
+
+    [Fact]
+    public async Task OpenApi_publica_el_esquema_de_autorizacion_bearer()
+    {
+        var json = await api.CreateClient().GetFromJsonAsync<JsonElement>("/openapi/v1.json");
+        var bearer = json.GetProperty("components").GetProperty("securitySchemes").GetProperty("Bearer");
+
+        Assert.Equal("http", bearer.GetProperty("type").GetString());
+        Assert.Equal("bearer", bearer.GetProperty("scheme").GetString());
+        Assert.NotEmpty(json.GetProperty("security").EnumerateArray());
+    }
+
     [Fact]
     public async Task Login_devuelve_token_cifrado_que_no_se_puede_leer()
     {
