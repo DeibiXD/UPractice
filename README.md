@@ -72,7 +72,7 @@ docker run --rm -v "${PWD}:/src:ro" -e "PRUEBAS_POSTGRES=Host=host.docker.intern
 
 Migraciones: solo se crean con `dotnet ef migrations add <Nombre> --project src/UPractice.Infrastructure --startup-project src/UPractice.Api --output-dir Persistencia/Migraciones`, después de hacer `git pull` de `main`.
 
-Requiere el SDK de .NET 10 indicado en `backend/global.json` (`dotnet --list-sdks`). Con Docker (T-06): `cp .env.example .env` y `docker compose up --build`.
+Requiere el SDK de .NET 10 indicado en `backend/global.json` (`dotnet --list-sdks`). Con Docker (T-06): `cp example.env .env` y `docker compose up --build`.
 
 ## Equipo
 | Integrante | Rol |

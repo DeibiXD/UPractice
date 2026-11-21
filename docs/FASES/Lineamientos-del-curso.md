@@ -57,3 +57,18 @@ Backend Web Service (Render.com o Fly.io): Plataforma PaaS conectada a GitHub. C
 Frontend SPA (Vercel o Netlify): Despliegue del cliente React/Vite en segundos con un CDN global, conectado a la rama main de GitHub.
 
 Integración Continua Básica: Cada git push a la rama principal actualizará automáticamente todo el ecosistema SaaS en producción.
+
+
+## Rúbrica de Evaluación del Proyecto Final
+
+| Criterio de Ingeniería | Deficiente (0- 50%) | Aceptable (51- 80%) | Excelente (81-100%) |
+| --- | --- | --- | --- |
+| I. Análisis y BD (Multi- empresa) | Lógica de negocio pobre o confusa. Tablas sin aislar por empresa. | Temática definida. ERD normalizado. Manejo funcional de entidades. | Regla Multi-empresa clara (EmpresaId). Restricciones e índices correctos en el ERD. Backlog ágil. |
+
+
+| Criterio de Ingeniería | Deficiente (0- 50%) | Aceptable (51- 80%) | Excelente (81-100%) |
+| --- | --- | --- | --- |
+| II. Backend (.NET Core) | Mezcla de capas. Contraseñas planas. Aislamiento manual o fallido. | Clean Architecture respetada. JWT funcional. EF Core funcionando. | Filtros Globales de EF aplicados. Simetría DTO. Middleware de excepciones interceptando FluentValidation. |
+| III. Frontend (React/Vite) | God components. Validaciones con if/else manuales. | Módulos separados. Protección de rutas básicas. Peticiones con Axios. | Arquitectura Vertical. Zod en tiempo real + Extractor de errores HTTP. UX fluida. |
+| IV. DevOps Local (Docker) | No compila en Docker. | Dockerfile básico funcional. | docker-compose.yml levanta el sistema completo en local con un solo comando. |
+| V. Despliegue Cloud | El proyecto solo funciona en localhost. | Despliegue parcial (solo Frontend o solo Backend). | Full-Stack en la nube: Vercel (Front) consumiendo Render (Back) conectado a Neon (BD). Todo HTTPS. |
