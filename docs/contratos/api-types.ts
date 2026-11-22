@@ -173,6 +173,13 @@ export interface VacanteEmpresaDto {
 }
 
 // ===== Postulaciones (estudiante) =====
+// POST /vacantes/{id}/postulaciones                         CrearPostulacionRequest     → 201 MiPostulacionDetalleDto
+// GET  /estudiantes/me/postulaciones?estado=                                            → 200 MiPostulacionDto[]
+// GET  /estudiantes/me/postulaciones/{id}                                               → 200 MiPostulacionDetalleDto
+// POST /estudiantes/me/postulaciones/{id}/retirar                                       → 200 MiPostulacionDetalleDto
+// POST /estudiantes/me/postulaciones/{id}/reactivar         ReactivarPostulacionRequest → 200 MiPostulacionDetalleDto
+// POST /estudiantes/me/postulaciones/{id}/respuesta-oferta  ResponderOfertaRequest      → 200 MiPostulacionDetalleDto
+// Sin paginar por ahora (PaginaResultado diferido hasta que una pantalla lo necesite).
 export type AccionPostulacion = 'Retirar' | 'Reactivar' | 'AceptarOferta' | 'DeclinarOferta';
 export interface CrearPostulacionRequest { curriculumId: Guid; }
 export type ReactivarPostulacionRequest = CrearPostulacionRequest;   // puede elegir otro CV, mismas validaciones
@@ -198,6 +205,9 @@ export interface MiPostulacionDetalleDto extends MiPostulacionDto {
 export interface ResponderOfertaRequest { aceptar: boolean; }
 
 // ===== Postulaciones (empresa) =====
+// GET   /empresa/vacantes/{id}/postulaciones?estado=&cumpleRequisitos=                  → 200 PostulanteResumenDto[]
+// GET   /empresa/postulaciones/{id}                                                     → 200 PostulanteDetalleDto
+// PATCH /empresa/postulaciones/{id}/estado   CambiarEstadoPostulacionRequest           → 200 PostulanteDetalleDto
 export interface PostulanteResumenDto {
   postulacionId: Guid;
   estudiante: { nombreCompleto: string; universidad: string; carrera: string };
@@ -229,6 +239,10 @@ export interface CambiarEstadoPostulacionRequest {
   nuevoEstado: 'EnRevision' | 'Entrevista' | 'Oferta' | 'Rechazada';
   comentario?: string | null;
 }
+
+// Query strings opcionales de los listados de postulaciones
+export interface FiltroMisPostulacionesQuery { estado?: EstadoPostulacion; }
+export interface FiltroPostulantesQuery { estado?: EstadoPostulacion; cumpleRequisitos?: boolean; }
 
 // ===== Usuarios y habilitaciones de la empresa =====
 export interface UsuarioEmpresaDto {

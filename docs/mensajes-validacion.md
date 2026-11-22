@@ -36,6 +36,8 @@
 | `habilidades` (HU-E03) | Lista no nula, elementos e IDs no vacíos; puede estar vacía | "Seleccione habilidades válidas." |
 | `habilidades` (HU-E03) | Sin IDs de habilidad repetidos | "No repita habilidades." |
 | `comentario` (estado) | Opcional, máx. 500 | "Máximo 500 caracteres." |
+| `curriculumId` (postular, reactivar) | Requerido | "Seleccione un currículum." |
+| `aceptar` (responder oferta) | Requerido (`true` o `false`) | "Indique si acepta o declina la oferta." |
 | `motivoRechazo` | Obligatorio si `aprobar = false`, 10–500 | "Indique el motivo (10 a 500 caracteres)." |
 | `observacion` (verificación) | Obligatoria si `aprobar = false`, 10–500 | "Indique la observación (10 a 500 caracteres)." |
 | `nombre` (universidad, facultad, carrera, habilidad) | 2–150 | "Debe tener entre 2 y 150 caracteres." |

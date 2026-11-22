@@ -452,13 +452,14 @@ stateDiagram-v2
 | — | `Enviada` | Estudiante | Perfil `Verificado`, carrera elegible, vacante `Publicada` y vigente, sin postulación previa. |
 | `Enviada` | `EnRevision` | Empresa | — |
 | `Enviada`, `EnRevision` | `Entrevista` | Empresa | — |
-| `EnRevision`, `Entrevista` | `Oferta` | Empresa | Quedan cupos (ofertas aceptadas \< `Cupos`). |
+| `EnRevision`, `Entrevista` | `Oferta` | Empresa | Quedan cupos: ofertas pendientes + prácticas aceptadas \< `Cupos`. Se verifica con la fila de la vacante bloqueada, para que dos ofertas simultáneas no superen el cupo. |
 | `Enviada`, `EnRevision`, `Entrevista` | `Rechazada` | Empresa | — |
 | `Oferta` | `Aceptada` | Estudiante | Sus demás postulaciones activas pasan a `Retirada`. *(Sprint 2: crea la `Practica`.)* |
 | `Oferta` | `Declinada` | Estudiante | — |
 | `Enviada`, `EnRevision`, `Entrevista` | `Retirada` | Estudiante | — |
+| `Retirada` | `Enviada` | Estudiante | Reactivar: mismas validaciones que al postularse (vacante vigente, sin práctica aceptada); puede elegir otro CV. |
 
-Estados finales: `Aceptada`, `Declinada`, `Rechazada`, `Retirada`. Cada transición inserta una fila en `HistorialPostulacion`; cualquier otra transición responde **422 `TRANSICION_INVALIDA`**.
+Estados finales: `Aceptada`, `Declinada`, `Rechazada`. Desde `Retirada` solo se puede reactivar. Cada transición inserta una fila en `HistorialPostulacion`; cualquier otra transición responde **422 `TRANSICION_INVALIDA`**.
 
 **Habilitación de empresa:** `Pendiente → Aprobada | Rechazada`; desde `Rechazada` la empresa puede volver a solicitar (`→ Pendiente`). **Verificación de perfil:** `Pendiente → Verificado | Rechazado`; si fue `Rechazado`, el estudiante corrige y vuelve a `Pendiente`. **Práctica (Sprint 2):** `EnCurso → Finalizada | Abandonada`; `FueContratado` se registra al cierre.
 
@@ -987,11 +988,12 @@ El middleware global traduce todas las excepciones a este formato; el **extracto
 | GET | `/estudiantes/me/curriculums/{id}/descarga` | → `UrlDescargaDto` | HU-03 |
 | GET | `/vacantes` | `FiltroVacantesQuery` → `PaginaResultado<VacanteResumenDto>` | HU-04 |
 | GET | `/vacantes/{id}` | → `VacanteDetalleDto` | HU-04 |
-| POST | `/vacantes/{id}/postulaciones` | `CrearPostulacionRequest` → 201 `MiPostulacionDto` | HU-05 |
-| GET | `/estudiantes/me/postulaciones?estado=` | → `PaginaResultado<MiPostulacionDto>` | HU-06 |
+| POST | `/vacantes/{id}/postulaciones` | `CrearPostulacionRequest` → 201 `MiPostulacionDetalleDto` | HU-05 |
+| GET | `/estudiantes/me/postulaciones?estado=` | → `MiPostulacionDto[]` | HU-06 |
 | GET | `/estudiantes/me/postulaciones/{id}` | → `MiPostulacionDetalleDto` | HU-06 |
-| POST | `/estudiantes/me/postulaciones/{id}/retirar` | → 204 | HU-06 |
-| POST | `/estudiantes/me/postulaciones/{id}/respuesta-oferta` | `ResponderOfertaRequest` → 204 | HU-06 |
+| POST | `/estudiantes/me/postulaciones/{id}/retirar` | → 200 `MiPostulacionDetalleDto` | HU-06 |
+| POST | `/estudiantes/me/postulaciones/{id}/reactivar` | `ReactivarPostulacionRequest` → 200 `MiPostulacionDetalleDto` | HU-06 |
+| POST | `/estudiantes/me/postulaciones/{id}/respuesta-oferta` | `ResponderOfertaRequest` → 200 `MiPostulacionDetalleDto` | HU-06 |
 
 **Empresa** (`Reclutador` y `AdminEmpresa`, salvo que se indique)
 
@@ -1007,10 +1009,12 @@ El middleware global traduce todas las excepciones a este formato; el **extracto
 | POST | `/empresa/vacantes` | `CrearVacanteRequest` → 201 `VacanteEmpresaDto` | HU-E03 |
 | PUT | `/empresa/vacantes/{id}` | `ActualizarVacanteRequest` → `VacanteEmpresaDto` | HU-E04 |
 | PATCH | `/empresa/vacantes/{id}/estado` | `CambiarEstadoVacanteRequest` → 204 | HU-E04 |
-| GET | `/empresa/vacantes/{id}/postulaciones?estado=&cumpleRequisitos=` | → `PaginaResultado<PostulanteResumenDto>` | HU-E05 |
+| GET | `/empresa/vacantes/{id}/postulaciones?estado=&cumpleRequisitos=` | → `PostulanteResumenDto[]` | HU-E05 |
 | GET | `/empresa/postulaciones/{id}` | → `PostulanteDetalleDto` | HU-E06 |
 | GET | `/empresa/postulaciones/{id}/curriculum/descarga` | → `UrlDescargaDto` | HU-E06 |
-| PATCH | `/empresa/postulaciones/{id}/estado` | `CambiarEstadoPostulacionRequest` → 204 | HU-E07 |
+| PATCH | `/empresa/postulaciones/{id}/estado` | `CambiarEstadoPostulacionRequest` → 200 `PostulanteDetalleDto` | HU-E07 |
+
+> **Postulaciones (paquete 4).** Las acciones devuelven el detalle actualizado (200) en lugar de 204, para que la pantalla no tenga que volver a consultarlo. Los listados de postulaciones no se paginan por ahora: `PaginaResultado` queda diferido hasta que una pantalla lo necesite.
 
 **Coordinación**
 
@@ -1224,15 +1228,23 @@ interface VacanteEmpresaDto {
 }
 
 // ===== Postulaciones (estudiante) =====
-type AccionPostulacion = 'Retirar' | 'AceptarOferta' | 'DeclinarOferta';
-interface CrearPostulacionRequest { curriculumId: Guid; cartaPresentacion?: string | null; }
+// POST /vacantes/{id}/postulaciones                         CrearPostulacionRequest     → 201 MiPostulacionDetalleDto
+// GET  /estudiantes/me/postulaciones?estado=                                            → 200 MiPostulacionDto[]
+// GET  /estudiantes/me/postulaciones/{id}                                               → 200 MiPostulacionDetalleDto
+// POST /estudiantes/me/postulaciones/{id}/retirar                                       → 200 MiPostulacionDetalleDto
+// POST /estudiantes/me/postulaciones/{id}/reactivar         ReactivarPostulacionRequest → 200 MiPostulacionDetalleDto
+// POST /estudiantes/me/postulaciones/{id}/respuesta-oferta  ResponderOfertaRequest      → 200 MiPostulacionDetalleDto
+// Sin paginar por ahora (PaginaResultado diferido hasta que una pantalla lo necesite).
+type AccionPostulacion = 'Retirar' | 'Reactivar' | 'AceptarOferta' | 'DeclinarOferta';
+interface CrearPostulacionRequest { curriculumId: Guid; }
+type ReactivarPostulacionRequest = CrearPostulacionRequest;   // puede elegir otro CV, mismas validaciones
 interface MiPostulacionDto {
   id: Guid;
   vacante: { id: Guid; titulo: string };
   empresa: Referencia;
   estado: EstadoPostulacion;
   fechaPostulacion: FechaISO;
-  fechaUltimoCambio: FechaISO;
+  fechaUltimoCambio: FechaISO;      // fecha del último registro del historial
   acciones: AccionPostulacion[];
 }
 interface HistorialItemDto {
@@ -1243,12 +1255,14 @@ interface HistorialItemDto {
 }
 interface MiPostulacionDetalleDto extends MiPostulacionDto {
   curriculum: { id: Guid; nombreVersion: string };
-  cartaPresentacion: string | null;
   historial: HistorialItemDto[];
 }
 interface ResponderOfertaRequest { aceptar: boolean; }
 
 // ===== Postulaciones (empresa) =====
+// GET   /empresa/vacantes/{id}/postulaciones?estado=&cumpleRequisitos=                  → 200 PostulanteResumenDto[]
+// GET   /empresa/postulaciones/{id}                                                     → 200 PostulanteDetalleDto
+// PATCH /empresa/postulaciones/{id}/estado   CambiarEstadoPostulacionRequest           → 200 PostulanteDetalleDto
 interface PostulanteResumenDto {
   postulacionId: Guid;
   estudiante: { nombreCompleto: string; universidad: string; carrera: string };
@@ -1261,18 +1275,15 @@ interface PostulanteDetalleDto {
   vacante: { id: Guid; titulo: string };
   estado: EstadoPostulacion;
   cumpleRequisitos: boolean;
-  cartaPresentacion: string | null;
   fechaPostulacion: FechaISO;
   estudiante: {
     nombreCompleto: string;
     correo: string;
-    telefono: string | null;          // null si no autorizó
     universidad: string;
     facultad: string;
     carrera: string;
     indiceAcademico: number | null;   // null si no autorizó
     habilidades: string[];
-    resumen: string | null;
     verificadoPor: string;            // nombre de la universidad
     fechaVerificacion: FechaISO;
   };
@@ -1283,6 +1294,10 @@ interface CambiarEstadoPostulacionRequest {
   nuevoEstado: 'EnRevision' | 'Entrevista' | 'Oferta' | 'Rechazada';
   comentario?: string | null;
 }
+
+// Query strings opcionales de los listados de postulaciones
+interface FiltroMisPostulacionesQuery { estado?: EstadoPostulacion; }
+interface FiltroPostulantesQuery { estado?: EstadoPostulacion; cumpleRequisitos?: boolean; }
 
 // ===== Usuarios y habilitaciones de la empresa =====
 interface UsuarioEmpresaDto {
