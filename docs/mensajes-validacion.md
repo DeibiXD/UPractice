@@ -35,6 +35,9 @@
 | `carrerasIds` (HU-E03) | Sin IDs repetidos | "No repita carreras." |
 | `habilidades` (HU-E03) | Lista no nula, elementos e IDs no vacíos; puede estar vacía | "Seleccione habilidades válidas." |
 | `habilidades` (HU-E03) | Sin IDs de habilidad repetidos | "No repita habilidades." |
+| `carreraId` (HU-04) | UUID no vacío cuando se proporciona | "Seleccione una carrera válida." |
+| `pagina` (HU-04) | Entero mayor o igual a 1; predeterminado 1 | "La página debe ser mayor o igual a 1." |
+| `tamanoPagina` (HU-04) | Entero 1–50; predeterminado 10 | "El tamaño de página debe estar entre 1 y 50." |
 | `comentario` (estado) | Opcional, máx. 500 | "Máximo 500 caracteres." |
 | `motivoRechazo` | Obligatorio si `aprobar = false`, 10–500 | "Indique el motivo (10 a 500 caracteres)." |
 | `observacion` (verificación) | Obligatoria si `aprobar = false`, 10–500 | "Indique la observación (10 a 500 caracteres)." |
@@ -71,6 +74,8 @@ El índice mínimo conserva el rango 0–100; la respuesta devuelve el valor per
 con la precisión de la columna `numeric(5,2)`, igual que los timestamps guardados en UTC.
 
 ## Cómo se comprueba la simetría
+
+HU-04 reutiliza el mensaje de `modalidad` para su filtro opcional. `busqueda` se recorta y un texto vacío o de espacios equivale a omitir el filtro. Un `carreraId` bien formado pero sin vacantes coincidentes produce una página vacía; no se valida como selección de creación. Los formatos inválidos de UUID, booleano, enum o entero usan el error 400 compartido de ModelState. El cálculo informativo de `cumploRequisitos` se describe en [la guía de HU-04](pruebas/HU-04.md); no altera las guardias de postulación.
 
 1. En un formulario, quitar temporalmente el `zodResolver`.
 2. Enviar datos inválidos.

@@ -58,6 +58,8 @@ El catálogo público está en `GET /api/v1/catalogos/universidades`. El registr
 
 **HU-E03 (backend):** `POST /api/v1/empresa/vacantes` permite crear borradores y publicar con carreras habilitadas para la empresa autenticada. La [guía de prueba](docs/pruebas/HU-E03.md) explica cómo obtener IDs del seed, enviar solicitudes en Swagger y comprobar las respuestas. Los catálogos GET y el panel de HU-E04 se integran por separado.
 
+**HU-04 (backend):** `GET /api/v1/vacantes` y `GET /api/v1/vacantes/{id}` permiten al estudiante explorar vacantes vigentes de empresas aprobadas en su universidad. La [guía de exploración](docs/pruebas/HU-04.md) describe filtros, paginación e indicadores personalizados.
+
 ### Si Windows bloquea la API ("An application control policy has blocked this file")
 
 Smart App Control de Windows 11 bloquea los programas sin firma que compila Rider. Se corre todo dentro de Docker, sin cambiar la seguridad del equipo (PowerShell, desde `backend`):
