@@ -58,6 +58,8 @@ El catálogo público está en `GET /api/v1/catalogos/universidades`. El registr
 
 **HU-E03 (backend):** `POST /api/v1/empresa/vacantes` permite crear borradores y publicar con carreras habilitadas para la empresa autenticada. La [guía de prueba](docs/pruebas/HU-E03.md) explica cómo obtener IDs del seed, enviar solicitudes en Swagger y comprobar las respuestas. Los catálogos GET y el panel de HU-E04 se integran por separado.
 
+**HU-E02 (backend):** los endpoints de `/api/v1/empresa/usuarios` permiten al `AdminEmpresa` listar, crear, desactivar y reactivar cuentas de su empresa. La [guía de prueba](docs/pruebas/HU-E02.md) cubre la contraseña temporal, el cambio obligatorio, los permisos y el aislamiento. El formulario y su esquema Zod corresponden a la entrega de frontend.
+
 ### Si Windows bloquea la API ("An application control policy has blocked this file")
 
 Smart App Control de Windows 11 bloquea los programas sin firma que compila Rider. Se corre todo dentro de Docker, sin cambiar la seguridad del equipo (PowerShell, desde `backend`):
