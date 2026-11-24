@@ -30,10 +30,50 @@ frontend/   SPA React (se crea en T-05)
 docs/       Diseño, ERD, contratos y mensajes de validación
 ```
 
-## Correr el backend
+## Correr con Docker (T-06)
+
+Requiere Docker Desktop iniciado con contenedores Linux. Desde la raíz del repositorio,
+la primera vez copia la plantilla si todavía no tienes un `.env` propio:
+
+```powershell
+if (-not (Test-Path -LiteralPath .env)) {
+    Copy-Item -LiteralPath .env.example -Destination .env
+}
+```
+
+Abre `.env` y completa `POSTGRES_PASSWORD`, `SUPERADMIN_PASSWORD` y `DEMO_PASSWORD`
+con valores locales distintos. Compose verifica que estén completos antes de arrancar.
+Las dos claves JWT pueden quedar vacías en este entorno Development: la API las genera
+temporalmente y tendrás que iniciar sesión otra vez después de reiniciarla.
+Para conservar los tokens entre reinicios, completa ambas claves según la plantilla.
+
+```powershell
+docker compose config --quiet
+docker compose up --build
+```
+
+Abre **http://localhost:8080/swagger**. La API espera a que PostgreSQL esté disponible,
+aplica la migración existente y carga el seed. Puedes iniciar sesión con
+`admin@digitales.example.com` y tu `DEMO_PASSWORD`, o con `admin@upractice.app`
+y tu `SUPERADMIN_PASSWORD` (esta última cuenta requiere cambiar la contraseña).
+
+La API se publica en `127.0.0.1:8080` y PostgreSQL en `127.0.0.1:5433`;
+los puertos se ajustan con `API_PORT` y `POSTGRES_PORT` en `.env`.
+Para DBeaver: base `upractice`, usuario `upractice` y contraseña `POSTGRES_PASSWORD`.
+El contenedor manual `upractice-pg` de los pasos siguientes utiliza otro puerto y volumen.
+
+`docker compose down` detiene este entorno. **La BD de Compose es temporal (`tmpfs`):
+sus datos se pierden al detener el contenedor de PostgreSQL.** En el siguiente arranque
+se reconstruyen la BD y los datos demo. El volumen de archivos se conserva;
+su proveedor funcional corresponde a T-08, todavía separado de esta entrega.
+
+La [guía de verificación de T-06](docs/pruebas/T-06.md) detalla el arranque,
+las pruebas de persistencia y cómo comprobar la ejecución sin privilegios.
+
+## Correr el backend con .NET local
 
 ```bash
-# 1. PostgreSQL local (una sola vez; mientras no exista el docker-compose de T-06)
+# 1. PostgreSQL persistente para ejecutar la API con .NET local (una sola vez)
 docker run -d --name upractice-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=upractice -p 5432:5432 -v upractice-pgdata:/var/lib/postgresql/data postgres:17-alpine
 
 # 2. Contraseñas del seed (solo en tu máquina, nunca en el repo)
@@ -72,7 +112,8 @@ docker run --rm -v "${PWD}:/src:ro" -e "PRUEBAS_POSTGRES=Host=host.docker.intern
 
 Migraciones: solo se crean con `dotnet ef migrations add <Nombre> --project src/UPractice.Infrastructure --startup-project src/UPractice.Api --output-dir Persistencia/Migraciones`, después de hacer `git pull` de `main`.
 
-Requiere el SDK de .NET 10 indicado en `backend/global.json` (`dotnet --list-sdks`). Con Docker (T-06): `cp .env.example .env` y `docker compose up --build`.
+La ejecución con .NET local requiere el SDK indicado en `backend/global.json`
+(`dotnet --list-sdks`). La ejecución con Docker utiliza el SDK dentro de la imagen.
 
 ## Equipo
 | Integrante | Rol |
