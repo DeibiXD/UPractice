@@ -1,0 +1,57 @@
+name: upractice
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: upractice
+      POSTGRES_USER: upractice
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Complete POSTGRES_PASSWORD en su archivo .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    # Base de demostración efímera; no utiliza el volumen del PostgreSQL manual.
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${API_PORT:-8080}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Postgres: "Host=db;Port=5432;Database=upractice;Username=upractice;Password=${POSTGRES_PASSWORD:?Complete POSTGRES_PASSWORD en su archivo .env}"
+      Db__AplicarMigraciones: "true"
+      Seed__Demo: "true"
+      Seed__SuperAdminCorreo: admin@upractice.app
+      Seed__SuperAdminPassword: ${SUPERADMIN_PASSWORD:?Complete SUPERADMIN_PASSWORD en su archivo .env}
+      Seed__DemoPassword: ${DEMO_PASSWORD:?Complete DEMO_PASSWORD en su archivo .env}
+      # En Development ambas claves pueden quedar vacías: IAM genera claves temporales.
+      Jwt__ClaveFirma: ${JWT_CLAVE_FIRMA:-}
+      Jwt__ClaveCifrado: ${JWT_CLAVE_CIFRADO:-}
+      Storage__Proveedor: Local
+      Storage__RutaLocal: /app/storage
+      Storage__UrlBaseLocal: "http://localhost:${API_PORT:-8080}"
+      Cors__Origenes__0: http://localhost:5173
+      Cors__Origenes__1: http://localhost:3000
+    volumes:
+      - upractice-storage:/app/storage
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+
+volumes:
+  upractice-storage:
