@@ -573,7 +573,7 @@ Como la BD guarda la llave y no la URL completa, cambiar de proveedor de almacen
 | Reparto | **Por vertical slice**, no por capa: quien toma "Vacantes" la hace de punta a punta (endpoint, validador, pantalla), para no bloquearse entre back y front. |
 | Contratos | Cambiar un DTO o endpoint implica actualizar S5 **en el mismo PR** y avisar al equipo. |
 | Migraciones EF | Antes de crear una migración: `git pull` de `main`. Nunca editar una migración que ya está en `main`. Si dos PR traen migraciones, el segundo la regenera tras el rebase. |
-| Secretos | Nunca en el repo: `appsettings.Development.json` sin secretos, `.env.example` versionado, valores reales en Render/Vercel. |
+| Secretos | Nunca en el repo: `appsettings.Development.json` sin secretos, `example.env` versionado, valores reales en Render/Vercel. |
 
 Estructura sugerida:
 

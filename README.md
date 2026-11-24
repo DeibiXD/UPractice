@@ -56,7 +56,11 @@ El catálogo público está en `GET /api/v1/catalogos/universidades`. El registr
 
 **Pruebas:** `dotnet test tests/UPractice.Tests`. Usan Testcontainers (necesitan Docker abierto) o, si existe la variable `PRUEBAS_POSTGRES`, un PostgreSQL existente, donde crean una base temporal y la borran al terminar. Incluyen la prueba obligatoria de aislamiento entre empresas (`AislamientoTests`).
 
-**HU-E03 (backend):** `POST /api/v1/empresa/vacantes` permite crear borradores y publicar con carreras habilitadas para la empresa autenticada. La [guía de prueba](docs/pruebas/HU-E03.md) explica cómo obtener IDs del seed, enviar solicitudes en Swagger y comprobar las respuestas. Los catálogos GET y el panel de HU-E04 se integran por separado.
+**HU-E03 (backend):** `POST /api/v1/empresa/vacantes` permite crear borradores y publicar con carreras habilitadas para la empresa autenticada. La [guía de prueba](docs/pruebas/HU-E03.md) explica cómo obtener IDs del seed, enviar solicitudes en Swagger y comprobar las respuestas. Los catálogos GET se integran como dependencias compartidas.
+
+**HU-E04 (backend):** listado paginado, detalle, edición y cambio de estado de vacantes propias. La [guía de gestión](docs/pruebas/HU-E04.md) describe las cuatro rutas, el vencimiento según Honduras y las comprobaciones de permisos y aislamiento.
+
+**HU-04 (backend):** `GET /api/v1/vacantes` y `GET /api/v1/vacantes/{id}` permiten al estudiante explorar vacantes vigentes de empresas aprobadas en su universidad. La [guía de exploración](docs/pruebas/HU-04.md) describe filtros, paginación e indicadores personalizados.
 
 **HU-E02 (backend):** los endpoints de `/api/v1/empresa/usuarios` permiten al `AdminEmpresa` listar, crear, desactivar y reactivar cuentas de su empresa. La [guía de prueba](docs/pruebas/HU-E02.md) cubre la contraseña temporal, el cambio obligatorio, los permisos y el aislamiento. El formulario y su esquema Zod corresponden a la entrega de frontend.
 
@@ -74,7 +78,7 @@ docker run --rm -v "${PWD}:/src:ro" -e "PRUEBAS_POSTGRES=Host=host.docker.intern
 
 Migraciones: solo se crean con `dotnet ef migrations add <Nombre> --project src/UPractice.Infrastructure --startup-project src/UPractice.Api --output-dir Persistencia/Migraciones`, después de hacer `git pull` de `main`.
 
-Requiere el SDK de .NET 10 indicado en `backend/global.json` (`dotnet --list-sdks`). Con Docker (T-06): `cp .env.example .env` y `docker compose up --build`.
+Requiere el SDK de .NET 10 indicado en `backend/global.json` (`dotnet --list-sdks`). Con Docker (T-06): `cp example.env .env` y `docker compose up --build`.
 
 ## Equipo
 | Integrante | Rol |
