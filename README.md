@@ -62,6 +62,8 @@ El catálogo público está en `GET /api/v1/catalogos/universidades`. El registr
 
 **HU-04 (backend):** `GET /api/v1/vacantes` y `GET /api/v1/vacantes/{id}` permiten al estudiante explorar vacantes vigentes de empresas aprobadas en su universidad. La [guía de exploración](docs/pruebas/HU-04.md) describe filtros, paginación e indicadores personalizados.
 
+**HU-E02 (backend):** los endpoints de `/api/v1/empresa/usuarios` permiten al `AdminEmpresa` listar, crear, desactivar y reactivar cuentas de su empresa. La [guía de prueba](docs/pruebas/HU-E02.md) cubre la contraseña temporal, el cambio obligatorio, los permisos y el aislamiento. El formulario y su esquema Zod corresponden a la entrega de frontend.
+
 ### Si Windows bloquea la API ("An application control policy has blocked this file")
 
 Smart App Control de Windows 11 bloquea los programas sin firma que compila Rider. Se corre todo dentro de Docker, sin cambiar la seguridad del equipo (PowerShell, desde `backend`):

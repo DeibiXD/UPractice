@@ -10,6 +10,7 @@
 | `nombre1`, `apellido1` | Requerido, 2–50, solo letras y espacios | "Debe tener entre 2 y 50 letras." |
 | `nombre2`, `apellido2` | Opcional, máx. 50, solo letras y espacios | "Máximo 50 letras." |
 | `correo` | Requerido, formato email, máx. 150 | "Ingrese un correo válido." |
+| `rol` (HU-E02) | Solo `Reclutador` o `AdminEmpresa` | "Seleccione un rol permitido." |
 | `password` / `passwordNuevo` | 8–64, al menos 1 mayúscula, 1 minúscula y 1 número | "La contraseña debe tener 8 a 64 caracteres, con mayúscula, minúscula y número." |
 | `confirmarPassword` | Igual a `password` | "Las contraseñas no coinciden." |
 | `password` (login) | Requerido | "Ingrese su contraseña." |
@@ -58,6 +59,12 @@ Necesitan la base de datos o el usuario actual, así que el frontend no las repi
 - HU-E04: editar fuera de Borrador/Pausada → 422 `TRANSICION_INVALIDA`, "Solo se pueden editar vacantes en Borrador o Pausada."
 - HU-E04: publicar/reanudar una vacante vencida → 422 `VACANTE_NO_DISPONIBLE`, "La vacante está vencida y no se puede publicar." Los saltos desde un estado efectivo Cerrada se rechazan primero mediante `TransicionesVacante` con `TRANSICION_INVALIDA`.
 
+En HU-E02, intentar desactivar la propia cuenta devuelve 422 `TRANSICION_INVALIDA`
+con el mensaje "No puede desactivar su propia cuenta.". El correo es único en toda
+la plataforma, incluso para usuarios de otra empresa o inactivos: 409 `CORREO_EN_USO`,
+"El correo ya está registrado.". Cambiar el estado de un usuario ajeno o inexistente
+devuelve 404, sin revelar a qué empresa pertenece.
+
 ## Errores semánticos con campo (solo backend)
 
 Se devuelven como 400 en `errors`, igual que la validación sintáctica, para que el formulario los pinte en el campo:
@@ -75,6 +82,15 @@ deben enviarse explícitamente; su omisión
 se reporta mediante el formato 400 de JSON/ModelState de la API.
 El índice mínimo conserva el rango 0–100; la respuesta devuelve el valor persistido
 con la precisión de la columna `numeric(5,2)`, igual que los timestamps guardados en UTC.
+
+En HU-E02 se recortan los espacios exteriores de nombres, apellidos y correo antes
+de validarlos y guardarlos. Los nombres opcionales vacíos se guardan como `null`;
+el correo se guarda en minúsculas. Las reglas de nombres reutilizan las de registro,
+incluidos acentos, apóstrofos y guiones. El formulario de esta HU debe aplicar esa
+misma normalización y esos mensajes al incorporar su esquema Zod.
+`rol` al crear y `activo` al cambiar el estado deben enviarse explícitamente;
+omitirlos o enviar tipos incorrectos devuelve el formato 400 de JSON/ModelState.
+La contraseña temporal se genera en el servidor y no es un campo del formulario.
 
 ## Cómo se comprueba la simetría
 
