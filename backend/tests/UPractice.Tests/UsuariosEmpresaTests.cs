@@ -380,13 +380,13 @@ public sealed class UsuariosEmpresaTests(ApiFixture api)
         var propia = await escenario.RecursoAsync();
         var ajena = await escenario.RecursoAsync(empresaB: true);
 
-        using (var listadoPropio = await reclutador.GetAsync($"/api/v1/empresa/vacantes/{propia.VacanteId}/postulantes"))
+        using (var listadoPropio = await reclutador.GetAsync($"/api/v1/empresa/vacantes/{propia.VacanteId}/postulaciones"))
             Assert.Equal(HttpStatusCode.OK, listadoPropio.StatusCode);
         using (var detallePropio = await reclutador.GetAsync($"/api/v1/empresa/postulaciones/{propia.PostulacionId}"))
             Assert.Equal(HttpStatusCode.OK, detallePropio.StatusCode);
         foreach (var rutaAjena in new[]
         {
-            $"/api/v1/empresa/vacantes/{ajena.VacanteId}/postulantes",
+            $"/api/v1/empresa/vacantes/{ajena.VacanteId}/postulaciones",
             $"/api/v1/empresa/postulaciones/{ajena.PostulacionId}",
         })
         {
