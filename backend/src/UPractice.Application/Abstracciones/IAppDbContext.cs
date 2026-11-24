@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using UPractice.Domain.Entidades;
 
 namespace UPractice.Application.Abstracciones;
@@ -30,4 +31,14 @@ public interface IAppDbContext
     DbSet<EvaluacionPracticante> EvaluacionesPracticante { get; }
 
     Task<int> SaveChangesAsync(CancellationToken ct = default);
+
+    /// <summary>Abre una transacción para operaciones que deben ser atómicas (se revierte si no se confirma).</summary>
+    Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Bloquea la fila de la vacante hasta que termine la transacción actual (SELECT ... FOR UPDATE). Sirve para serializar
+    /// operaciones que dependen de un conteo, como los cupos de oferta. Debe llamarse dentro de BeginTransactionAsync.
+    /// El id debe venir de una consulta ya filtrada por tenant: el SQL directo no aplica los filtros globales.
+    /// </summary>
+    Task BloquearVacanteAsync(Guid vacanteId, CancellationToken ct = default);
 }

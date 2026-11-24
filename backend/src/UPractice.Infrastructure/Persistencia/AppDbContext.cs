@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using UPractice.Application.Abstracciones;
 using UPractice.Domain.Entidades;
 
@@ -28,6 +29,12 @@ public sealed partial class AppDbContext(DbContextOptions<AppDbContext> options,
     public DbSet<DocumentoPractica> DocumentosPractica => Set<DocumentoPractica>();
     public DbSet<EvaluacionEmpresa> EvaluacionesEmpresa => Set<EvaluacionEmpresa>();
     public DbSet<EvaluacionPracticante> EvaluacionesPracticante => Set<EvaluacionPracticante>();
+
+    public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken ct = default) =>
+        await Database.BeginTransactionAsync(ct);
+
+    public Task BloquearVacanteAsync(Guid vacanteId, CancellationToken ct = default) =>
+        Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM \"Vacantes\" WHERE \"Id\" = {vacanteId} FOR UPDATE", ct);
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
