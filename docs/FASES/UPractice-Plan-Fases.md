@@ -316,7 +316,7 @@ npm install @mui/material @emotion/react @emotion/styled
 
 - **MUI** se recomienda porque trae tablas, formularios, diálogos y fechas listos; elijan otra librería solo si alguien ya la domina. Lo importante es usar **una sola**.
 - **TanStack Query** maneja carga, caché y recarga de datos; reduce mucho código repetido en listados.
-- `.env.development`: `VITE_API_URL=http://localhost:8080/api/v1` (y `.env.example` versionado con la misma variable vacía).
+- `.env.development`: `VITE_API_URL=http://localhost:8080/api/v1` (y `example.env` versionado con la misma variable vacía).
 
 ### 5.2 Estructura
 
@@ -544,7 +544,7 @@ volumes:
   upractice-storage:
 ```
 
-`.env.example` (versionado) y `.env` (cada uno el suyo, **no se sube**):
+`example.env` (versionado) y `.env` (cada uno el suyo, **no se sube**):
 
 ```dotenv
 SUPERADMIN_PASSWORD=
@@ -568,7 +568,7 @@ docker compose logs -f api       # ver logs de la API
 ### 6.5 Lista de cierre de la Fase 4
 
 - [ ] `docker build` produce una imagen basada en `aspnet:10.0-alpine` (verificar tamaño con `docker images`).
-- [ ] Un integrante que **nunca** ha ejecutado el proyecto clona el repo, copia `.env.example` a `.env`, ejecuta `docker compose up --build` y entra a Swagger sin pasos extra.
+- [ ] Un integrante que **nunca** ha ejecutado el proyecto clona el repo, copia `example.env` a `.env`, ejecuta `docker compose up --build` y entra a Swagger sin pasos extra.
 - [ ] Al hacer `down` y `up` la BD vuelve a crearse con los datos demo.
 
 ---

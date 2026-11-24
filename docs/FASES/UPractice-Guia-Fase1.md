@@ -541,7 +541,7 @@ dist/
 # Variables de entorno (nunca subir secretos)
 .env
 .env.*
-!.env.example
+!example.env
 
 # JetBrains
 .idea/

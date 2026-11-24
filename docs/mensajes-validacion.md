@@ -31,13 +31,14 @@
 | `indiceMinimo` | Opcional, 0–100 | "El índice mínimo debe estar entre 0 y 100." |
 | `fechaCierre` | Posterior a hoy (hora de Honduras) | "La fecha de cierre debe ser posterior a hoy." |
 | `carrerasIds` | Mínimo 1 | "Seleccione al menos una carrera." |
-| `carrerasIds` (HU-E03) | IDs no vacíos | "Seleccione carreras válidas y activas." |
-| `carrerasIds` (HU-E03) | Sin IDs repetidos | "No repita carreras." |
-| `habilidades` (HU-E03) | Lista no nula, elementos e IDs no vacíos; puede estar vacía | "Seleccione habilidades válidas." |
-| `habilidades` (HU-E03) | Sin IDs de habilidad repetidos | "No repita habilidades." |
+| `carrerasIds` (HU-E03/HU-E04) | IDs no vacíos | "Seleccione carreras válidas y activas." |
+| `carrerasIds` (HU-E03/HU-E04) | Sin IDs repetidos | "No repita carreras." |
+| `habilidades` (HU-E03/HU-E04) | Lista no nula, elementos e IDs no vacíos; puede estar vacía | "Seleccione habilidades válidas." |
+| `habilidades` (HU-E03/HU-E04) | Sin IDs de habilidad repetidos | "No repita habilidades." |
+| `estado`, `nuevoEstado` (HU-E04) | Estado de vacante reconocido | "Seleccione un estado de vacante válido." |
 | `carreraId` (HU-04) | UUID no vacío cuando se proporciona | "Seleccione una carrera válida." |
-| `pagina` (HU-04) | Entero mayor o igual a 1; predeterminado 1 | "La página debe ser mayor o igual a 1." |
-| `tamanoPagina` (HU-04) | Entero 1–50; predeterminado 10 | "El tamaño de página debe estar entre 1 y 50." |
+| `pagina` (HU-04/HU-E04) | Entero mayor o igual a 1; predeterminado 1 | "La página debe ser mayor o igual a 1." |
+| `tamanoPagina` (HU-04/HU-E04) | Entero 1–50; predeterminado 10 | "El tamaño de página debe estar entre 1 y 50." |
 | `comentario` (estado) | Opcional, máx. 500 | "Máximo 500 caracteres." |
 | `motivoRechazo` | Obligatorio si `aprobar = false`, 10–500 | "Indique el motivo (10 a 500 caracteres)." |
 | `observacion` (verificación) | Obligatoria si `aprobar = false`, 10–500 | "Indique la observación (10 a 500 caracteres)." |
@@ -54,6 +55,8 @@ Necesitan la base de datos o el usuario actual, así que el frontend no las repi
 - Unicidad de correo, RTN, postulación, siglas y dominio → `CORREO_EN_USO`, `RTN_EN_USO`, `POSTULACION_DUPLICADA`, `SIGLAS_EN_USO`, `DOMINIO_EN_USO`
 - Carrera elegible, perfil verificado, empresa habilitada, carreras permitidas → `CARRERA_NO_ELEGIBLE`, `PERFIL_NO_VERIFICADO`, `EMPRESA_NO_HABILITADA`, `CARRERA_NO_PERMITIDA`
 - Transiciones de estado, cupos y límite de CV → `TRANSICION_INVALIDA`, `SIN_CUPOS`, `LIMITE_CURRICULUMS`
+- HU-E04: editar fuera de Borrador/Pausada → 422 `TRANSICION_INVALIDA`, "Solo se pueden editar vacantes en Borrador o Pausada."
+- HU-E04: publicar/reanudar una vacante vencida → 422 `VACANTE_NO_DISPONIBLE`, "La vacante está vencida y no se puede publicar." Los saltos desde un estado efectivo Cerrada se rechazan primero mediante `TransicionesVacante` con `TRANSICION_INVALIDA`.
 
 ## Errores semánticos con campo (solo backend)
 
