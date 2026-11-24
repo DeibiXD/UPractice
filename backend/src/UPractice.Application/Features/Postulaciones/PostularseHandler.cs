@@ -9,7 +9,7 @@ namespace UPractice.Application.Features.Postulaciones;
 /// <summary>
 /// POST /vacantes/{vacanteId}/postulaciones (HU-05). El estudiante sale de ICurrentUser; el EmpresaId, de la vacante.
 /// </summary>
-public sealed class PostularseHandler(IAppDbContext db, ICurrentUser actual)
+public sealed class PostularseHandler(IAppDbContext db, ICurrentUser actual, IFechaHonduras fecha)
 {
     public async Task<MiPostulacionDetalleDto> EjecutarAsync(Guid vacanteId, CrearPostulacionRequest request, CancellationToken ct)
     {
@@ -20,11 +20,12 @@ public sealed class PostularseHandler(IAppDbContext db, ICurrentUser actual)
             throw new ConflictoException(CodigosError.PostulacionDuplicada,
                 "Ya se postuló a esta vacante. Si la retiró, puede reactivarla desde su panel.");
 
-        var vacante = await ReglasPostulacion.ExigirVacanteDisponibleAsync(db, vacanteId, ct);
+        var vacante = await ReglasPostulacion.ExigirVacanteDisponibleAsync(db, fecha, vacanteId, ct);
         await ReglasPostulacion.ExigirSinPracticaAceptadaAsync(db, ct);
         var perfil = await ReglasPostulacion.ExigirPerfilElegibleAsync(db, vacanteId, ct);
         await ReglasPostulacion.ExigirCurriculumAsync(db, request.CurriculumId, ct);
 
+        var ahora = fecha.UtcAhora();
         var postulacion = new Postulacion
         {
             EmpresaId = vacante.EmpresaId,
@@ -33,12 +34,12 @@ public sealed class PostularseHandler(IAppDbContext db, ICurrentUser actual)
             CurriculumId = request.CurriculumId,
             Estado = EstadoPostulacion.Enviada,
             CumpleRequisitos = ReglasPostulacion.CumpleIndice(vacante.IndiceMinimo, perfil.IndiceAcademico),
-            FechaPostulacion = DateTime.UtcNow,
+            FechaPostulacion = ahora,
         };
-        postulacion.Historial.Add(ReglasPostulacion.NuevoHistorial(postulacion, null, EstadoPostulacion.Enviada, estudianteId));
+        postulacion.Historial.Add(ReglasPostulacion.NuevoHistorial(postulacion, null, EstadoPostulacion.Enviada, estudianteId, ahora));
         db.Postulaciones.Add(postulacion);
         await db.SaveChangesAsync(ct);
 
-        return await ConsultasPostulacion.DetalleMioAsync(db, postulacion.Id, ct);
+        return await ConsultasPostulacion.DetalleMioAsync(db, fecha.Hoy(), postulacion.Id, ct);
     }
 }

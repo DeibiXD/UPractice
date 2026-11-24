@@ -432,10 +432,17 @@ node_modules/
 dist/
 *.local
 
-# Variables de entorno (nunca subir secretos)
-.env
-.env.*
-!.env.example
+# Variables de entorno
+# - NUNCA se suben: .env, .env.development, .env.production, *.env, etc. (en cualquier carpeta)
+# - SIEMPRE se suben: las plantillas example.env (sin valores reales), en cualquier carpeta
+**/.env
+**/.env.*
+**/*.env
+!**/example.env
+
+# Credenciales del equipo (solo local, NUNCA se sube)
+credenciales*.md
+**/credenciales*.md
 
 # JetBrains
 .idea/

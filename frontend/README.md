@@ -4,7 +4,7 @@ React + TypeScript + Vite · MUI · React Router · React Hook Form + Zod · Tan
 
 ```bash
 cd frontend
-cp .env.example .env.development     # VITE_API_URL (por defecto http://localhost:5294/api/v1)
+cp example.env .env.development     # VITE_API_URL (por defecto http://localhost:5294/api/v1)
 npm install
 npm run dev                          # http://localhost:5173  (la API debe estar corriendo)
 ```

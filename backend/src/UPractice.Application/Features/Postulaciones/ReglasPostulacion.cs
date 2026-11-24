@@ -13,11 +13,9 @@ namespace UPractice.Application.Features.Postulaciones;
 /// </summary>
 internal static class ReglasPostulacion
 {
-    /// <summary>Honduras es UTC-6 todo el año (sin horario de verano). La fecha de cierre se compara en hora de Honduras.</summary>
-    private static DateOnly HoyEnHonduras() => DateOnly.FromDateTime(DateTime.UtcNow.AddHours(-6));
-
-    public static bool VacanteVigente(EstadoVacante estado, DateOnly fechaCierre) =>
-        estado == EstadoVacante.Publicada && fechaCierre >= HoyEnHonduras();
+    /// <summary>Publicada y con la fecha de cierre sin vencer. "Hoy" es la fecha de Honduras (IFechaHonduras).</summary>
+    public static bool VacanteVigente(EstadoVacante estado, DateOnly fechaCierre, DateOnly hoy) =>
+        estado == EstadoVacante.Publicada && fechaCierre >= hoy;
 
     public static Guid ExigirUsuario(ICurrentUser actual) =>
         actual.UsuarioId ?? throw new NoAutenticadoException("La sesión ya no es válida. Inicie sesión de nuevo.");
@@ -26,7 +24,8 @@ internal static class ReglasPostulacion
     public sealed record VacanteDisponible(Guid EmpresaId, decimal? IndiceMinimo);
 
     /// <summary>La vacante debe estar publicada, vigente, con empresa activa y habilitada en la universidad del estudiante.</summary>
-    public static async Task<VacanteDisponible> ExigirVacanteDisponibleAsync(IAppDbContext db, Guid vacanteId, CancellationToken ct)
+    public static async Task<VacanteDisponible> ExigirVacanteDisponibleAsync(
+        IAppDbContext db, IFechaHonduras fecha, Guid vacanteId, CancellationToken ct)
     {
         var vacante = await db.Vacantes
             .Where(v => v.Id == vacanteId)
@@ -37,7 +36,7 @@ internal static class ReglasPostulacion
         // El filtro global del estudiante solo deja ver las habilitaciones aprobadas de su universidad.
         var habilitada = await db.HabilitacionesEmpresa.AnyAsync(h => h.EmpresaId == vacante.EmpresaId, ct);
 
-        if (!vacante.EmpresaActiva || !habilitada || !VacanteVigente(vacante.Estado, vacante.FechaCierre))
+        if (!vacante.EmpresaActiva || !habilitada || !VacanteVigente(vacante.Estado, vacante.FechaCierre, fecha.Hoy()))
             throw new ReglaNegocioException(CodigosError.VacanteNoDisponible, "La vacante ya no está disponible para postularse.");
 
         return new VacanteDisponible(vacante.EmpresaId, vacante.IndiceMinimo);
@@ -76,7 +75,8 @@ internal static class ReglasPostulacion
     public static bool CumpleIndice(decimal? indiceMinimo, decimal indiceAcademico) =>
         indiceMinimo is null || indiceAcademico >= indiceMinimo;
 
-    public static HistorialPostulacion NuevoHistorial(Postulacion p, EstadoPostulacion? anterior, EstadoPostulacion nuevo, Guid cambiadoPorId, string? comentario = null) => new()
+    public static HistorialPostulacion NuevoHistorial(
+        Postulacion p, EstadoPostulacion? anterior, EstadoPostulacion nuevo, Guid cambiadoPorId, DateTime ahora, string? comentario = null) => new()
     {
         EmpresaId = p.EmpresaId,
         PostulacionId = p.Id,
@@ -84,6 +84,7 @@ internal static class ReglasPostulacion
         EstadoNuevo = nuevo,
         CambiadoPorId = cambiadoPorId,
         Comentario = comentario,
+        Fecha = ahora,
     };
 
     /// <summary>Acciones del estudiante según la máquina de estados. Reactivar solo si la vacante sigue disponible y no tiene práctica aceptada.</summary>

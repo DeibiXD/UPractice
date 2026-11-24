@@ -15,10 +15,14 @@ internal static class ConsultasPostulacion
 {
     // ===== Estudiante =====
 
-    public static async Task<List<MiPostulacionDto>> ListarMiasAsync(IAppDbContext db, CancellationToken ct)
+    public static async Task<List<MiPostulacionDto>> ListarMiasAsync(
+        IAppDbContext db, DateOnly hoy, EstadoPostulacion? estado, CancellationToken ct)
     {
         // El filtro global del estudiante ya deja solo sus postulaciones.
-        var filas = await db.Postulaciones.AsNoTracking()
+        var consulta = db.Postulaciones.AsNoTracking();
+        if (estado is { } e) consulta = consulta.Where(p => p.Estado == e);
+
+        var filas = await consulta
             .Select(p => new
             {
                 p.Id,
@@ -34,7 +38,8 @@ internal static class ConsultasPostulacion
             })
             .ToListAsync(ct);
 
-        var tienePracticaAceptada = filas.Any(f => f.Estado == EstadoPostulacion.Aceptada);
+        // Con el filtro por estado las filas devueltas no alcanzan: "tiene una práctica aceptada" se consulta aparte.
+        var tienePracticaAceptada = await db.Postulaciones.AnyAsync(p => p.Estado == EstadoPostulacion.Aceptada, ct);
 
         return filas
             .Select(f => new MiPostulacionDto(
@@ -44,12 +49,12 @@ internal static class ConsultasPostulacion
                 f.Estado,
                 f.FechaPostulacion,
                 f.UltimoCambio ?? f.FechaPostulacion,
-                ReglasPostulacion.AccionesPara(f.Estado, ReglasPostulacion.VacanteVigente(f.VacanteEstado, f.FechaCierre) && !tienePracticaAceptada)))
+                ReglasPostulacion.AccionesPara(f.Estado, ReglasPostulacion.VacanteVigente(f.VacanteEstado, f.FechaCierre, hoy) && !tienePracticaAceptada)))
             .OrderByDescending(p => p.FechaUltimoCambio)
             .ToList();
     }
 
-    public static async Task<MiPostulacionDetalleDto> DetalleMioAsync(IAppDbContext db, Guid id, CancellationToken ct)
+    public static async Task<MiPostulacionDetalleDto> DetalleMioAsync(IAppDbContext db, DateOnly hoy, Guid id, CancellationToken ct)
     {
         var fila = await db.Postulaciones.AsNoTracking()
             .Where(p => p.Id == id)
@@ -84,21 +89,25 @@ internal static class ConsultasPostulacion
             fila.Estado,
             fila.FechaPostulacion,
             historial.Count > 0 ? historial.Max(h => h.Fecha) : fila.FechaPostulacion,
-            ReglasPostulacion.AccionesPara(fila.Estado, ReglasPostulacion.VacanteVigente(fila.VacanteEstado, fila.FechaCierre) && !tienePracticaAceptada),
+            ReglasPostulacion.AccionesPara(fila.Estado, ReglasPostulacion.VacanteVigente(fila.VacanteEstado, fila.FechaCierre, hoy) && !tienePracticaAceptada),
             new CurriculumRef(fila.CurriculumId, fila.CurriculumNombre),
             historial);
     }
 
     // ===== Empresa =====
 
-    public static async Task<List<PostulanteResumenDto>> ListarPostulantesAsync(IAppDbContext db, Guid vacanteId, CancellationToken ct)
+    public static async Task<List<PostulanteResumenDto>> ListarPostulantesAsync(
+        IAppDbContext db, Guid vacanteId, EstadoPostulacion? estado, bool? cumpleRequisitos, CancellationToken ct)
     {
         // Si la vacante es de otra empresa el filtro global la oculta: 404, no una lista vacía (no revela que existe).
         if (!await db.Vacantes.AnyAsync(v => v.Id == vacanteId, ct))
             throw new NoEncontradoException("La vacante no existe.");
 
-        var filas = await db.Postulaciones.AsNoTracking()
-            .Where(p => p.VacanteId == vacanteId)
+        var consulta = db.Postulaciones.AsNoTracking().Where(p => p.VacanteId == vacanteId);
+        if (estado is { } e) consulta = consulta.Where(p => p.Estado == e);
+        if (cumpleRequisitos is { } c) consulta = consulta.Where(p => p.CumpleRequisitos == c);
+
+        var filas = await consulta
             .Select(p => new
             {
                 p.Id,
@@ -127,6 +136,8 @@ internal static class ConsultasPostulacion
 
     public static async Task<PostulanteDetalleDto> DetallePostulanteAsync(IAppDbContext db, Guid id, CancellationToken ct)
     {
+        // Dos colecciones (habilidades e historial) en una sola proyección obligan a EF a un join cartesiano y emiten
+        // un aviso de rendimiento. Por eso el historial se lee en una segunda consulta, igual de filtrada por tenant.
         var fila = await db.Postulaciones.AsNoTracking()
             .Where(p => p.Id == id)
             .Select(p => new
@@ -151,23 +162,25 @@ internal static class ConsultasPostulacion
                 FechaVerificacion = p.Estudiante.Perfil!.FechaVerificacion,
                 CurriculumId = p.CurriculumId,
                 CurriculumNombre = p.Curriculum.NombreVersion,
-                Historial = p.Historial
-                    .OrderBy(h => h.Fecha)
-                    .Select(h => new
-                    {
-                        h.EstadoAnterior,
-                        h.EstadoNuevo,
-                        h.Fecha,
-                        h.Comentario,
-                        Nombre1 = h.CambiadoPor.Nombre1,
-                        Nombre2 = h.CambiadoPor.Nombre2,
-                        Apellido1 = h.CambiadoPor.Apellido1,
-                        Apellido2 = h.CambiadoPor.Apellido2,
-                    })
-                    .ToList(),
             })
             .FirstOrDefaultAsync(ct)
             ?? throw new NoEncontradoException("La postulación no existe.");
+
+        var historial = await db.HistorialPostulacion.AsNoTracking()
+            .Where(h => h.PostulacionId == id)
+            .OrderBy(h => h.Fecha)
+            .Select(h => new
+            {
+                h.EstadoAnterior,
+                h.EstadoNuevo,
+                h.Fecha,
+                h.Comentario,
+                Nombre1 = h.CambiadoPor.Nombre1,
+                Nombre2 = h.CambiadoPor.Nombre2,
+                Apellido1 = h.CambiadoPor.Apellido1,
+                Apellido2 = h.CambiadoPor.Apellido2,
+            })
+            .ToListAsync(ct);
 
         return new PostulanteDetalleDto(
             fila.Id,
@@ -186,7 +199,7 @@ internal static class ConsultasPostulacion
                 fila.Universidad,
                 fila.FechaVerificacion ?? default),
             new CurriculumRef(fila.CurriculumId, fila.CurriculumNombre),
-            fila.Historial
+            historial
                 .Select(h => new HistorialPostulanteDto(
                     h.EstadoAnterior, h.EstadoNuevo, h.Fecha, h.Comentario,
                     Usuario.ArmarNombreCompleto(h.Nombre1, h.Nombre2, h.Apellido1, h.Apellido2)))

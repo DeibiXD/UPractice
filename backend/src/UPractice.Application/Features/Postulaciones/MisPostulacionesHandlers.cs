@@ -7,19 +7,21 @@ using UPractice.Domain.Reglas;
 namespace UPractice.Application.Features.Postulaciones;
 
 /// <summary>GET /postulaciones (HU-06): el panel del estudiante. El filtro global deja solo sus postulaciones.</summary>
-public sealed class ListarMisPostulacionesHandler(IAppDbContext db)
+public sealed class ListarMisPostulacionesHandler(IAppDbContext db, IFechaHonduras fecha)
 {
-    public Task<List<MiPostulacionDto>> EjecutarAsync(CancellationToken ct) => ConsultasPostulacion.ListarMiasAsync(db, ct);
+    public Task<List<MiPostulacionDto>> EjecutarAsync(EstadoPostulacion? estado, CancellationToken ct) =>
+        ConsultasPostulacion.ListarMiasAsync(db, fecha.Hoy(), estado, ct);
 }
 
 /// <summary>GET /postulaciones/{id} (HU-06): detalle con historial. La de otro estudiante responde 404.</summary>
-public sealed class ObtenerMiPostulacionHandler(IAppDbContext db)
+public sealed class ObtenerMiPostulacionHandler(IAppDbContext db, IFechaHonduras fecha)
 {
-    public Task<MiPostulacionDetalleDto> EjecutarAsync(Guid id, CancellationToken ct) => ConsultasPostulacion.DetalleMioAsync(db, id, ct);
+    public Task<MiPostulacionDetalleDto> EjecutarAsync(Guid id, CancellationToken ct) =>
+        ConsultasPostulacion.DetalleMioAsync(db, fecha.Hoy(), id, ct);
 }
 
 /// <summary>POST /postulaciones/{id}/retirar (HU-06). Solo desde Enviada, EnRevision o Entrevista.</summary>
-public sealed class RetirarPostulacionHandler(IAppDbContext db, ICurrentUser actual)
+public sealed class RetirarPostulacionHandler(IAppDbContext db, ICurrentUser actual, IFechaHonduras fecha)
 {
     public async Task<MiPostulacionDetalleDto> EjecutarAsync(Guid id, CancellationToken ct)
     {
@@ -31,10 +33,10 @@ public sealed class RetirarPostulacionHandler(IAppDbContext db, ICurrentUser act
 
         var anterior = postulacion.Estado;
         postulacion.Estado = EstadoPostulacion.Retirada;
-        db.HistorialPostulacion.Add(ReglasPostulacion.NuevoHistorial(postulacion, anterior, EstadoPostulacion.Retirada, estudianteId));
+        db.HistorialPostulacion.Add(ReglasPostulacion.NuevoHistorial(postulacion, anterior, EstadoPostulacion.Retirada, estudianteId, fecha.UtcAhora()));
         await db.SaveChangesAsync(ct);
 
-        return await ConsultasPostulacion.DetalleMioAsync(db, id, ct);
+        return await ConsultasPostulacion.DetalleMioAsync(db, fecha.Hoy(), id, ct);
     }
 }
 
@@ -42,7 +44,7 @@ public sealed class RetirarPostulacionHandler(IAppDbContext db, ICurrentUser act
 /// POST /postulaciones/{id}/reactivar (HU-06, D-20). Retirada → Enviada, con las mismas validaciones que al postularse
 /// y la posibilidad de elegir otro CV. Se recalcula CumpleRequisitos con el índice actual.
 /// </summary>
-public sealed class ReactivarPostulacionHandler(IAppDbContext db, ICurrentUser actual)
+public sealed class ReactivarPostulacionHandler(IAppDbContext db, ICurrentUser actual, IFechaHonduras fecha)
 {
     public async Task<MiPostulacionDetalleDto> EjecutarAsync(Guid id, ReactivarPostulacionRequest request, CancellationToken ct)
     {
@@ -52,7 +54,7 @@ public sealed class ReactivarPostulacionHandler(IAppDbContext db, ICurrentUser a
 
         TransicionesPostulacion.Validar(postulacion.Estado, EstadoPostulacion.Enviada, ActorPostulacion.Estudiante);
 
-        var vacante = await ReglasPostulacion.ExigirVacanteDisponibleAsync(db, postulacion.VacanteId, ct);
+        var vacante = await ReglasPostulacion.ExigirVacanteDisponibleAsync(db, fecha, postulacion.VacanteId, ct);
         await ReglasPostulacion.ExigirSinPracticaAceptadaAsync(db, ct);
         var perfil = await ReglasPostulacion.ExigirPerfilElegibleAsync(db, postulacion.VacanteId, ct);
         await ReglasPostulacion.ExigirCurriculumAsync(db, request.CurriculumId, ct);
@@ -61,10 +63,10 @@ public sealed class ReactivarPostulacionHandler(IAppDbContext db, ICurrentUser a
         postulacion.Estado = EstadoPostulacion.Enviada;
         postulacion.CurriculumId = request.CurriculumId;
         postulacion.CumpleRequisitos = ReglasPostulacion.CumpleIndice(vacante.IndiceMinimo, perfil.IndiceAcademico);
-        db.HistorialPostulacion.Add(ReglasPostulacion.NuevoHistorial(postulacion, anterior, EstadoPostulacion.Enviada, estudianteId, "Postulación reactivada."));
+        db.HistorialPostulacion.Add(ReglasPostulacion.NuevoHistorial(postulacion, anterior, EstadoPostulacion.Enviada, estudianteId, fecha.UtcAhora(), "Postulación reactivada."));
         await db.SaveChangesAsync(ct);
 
-        return await ConsultasPostulacion.DetalleMioAsync(db, id, ct);
+        return await ConsultasPostulacion.DetalleMioAsync(db, fecha.Hoy(), id, ct);
     }
 }
 
@@ -72,7 +74,7 @@ public sealed class ReactivarPostulacionHandler(IAppDbContext db, ICurrentUser a
 /// PUT /postulaciones/{id}/oferta (HU-06). Oferta → Aceptada o Declinada. Al aceptar, el resto de las postulaciones
 /// activas del estudiante se retiran solas, porque solo puede hacer una práctica.
 /// </summary>
-public sealed class ResponderOfertaHandler(IAppDbContext db, ICurrentUser actual)
+public sealed class ResponderOfertaHandler(IAppDbContext db, ICurrentUser actual, IFechaHonduras fecha)
 {
     public async Task<MiPostulacionDetalleDto> EjecutarAsync(Guid id, ResponderOfertaRequest request, CancellationToken ct)
     {
@@ -80,6 +82,7 @@ public sealed class ResponderOfertaHandler(IAppDbContext db, ICurrentUser actual
         var postulacion = await db.Postulaciones.FirstOrDefaultAsync(p => p.Id == id, ct)
             ?? throw new NoEncontradoException("La postulación no existe.");
 
+        var ahora = fecha.UtcAhora();
         var aceptar = request.Aceptar == true;
         var destino = aceptar ? EstadoPostulacion.Aceptada : EstadoPostulacion.Declinada;
         TransicionesPostulacion.Validar(postulacion.Estado, destino, ActorPostulacion.Estudiante);
@@ -96,15 +99,15 @@ public sealed class ResponderOfertaHandler(IAppDbContext db, ICurrentUser actual
                 var estadoOtra = otra.Estado;
                 otra.Estado = EstadoPostulacion.Retirada;   // retiro automático: no pasa por la tabla de transiciones del estudiante
                 db.HistorialPostulacion.Add(ReglasPostulacion.NuevoHistorial(
-                    otra, estadoOtra, EstadoPostulacion.Retirada, estudianteId, "Retirada automáticamente al aceptar otra oferta."));
+                    otra, estadoOtra, EstadoPostulacion.Retirada, estudianteId, ahora, "Retirada automáticamente al aceptar otra oferta."));
             }
         }
 
         var anterior = postulacion.Estado;
         postulacion.Estado = destino;
-        db.HistorialPostulacion.Add(ReglasPostulacion.NuevoHistorial(postulacion, anterior, destino, estudianteId));
+        db.HistorialPostulacion.Add(ReglasPostulacion.NuevoHistorial(postulacion, anterior, destino, estudianteId, ahora));
         await db.SaveChangesAsync(ct);
 
-        return await ConsultasPostulacion.DetalleMioAsync(db, id, ct);
+        return await ConsultasPostulacion.DetalleMioAsync(db, fecha.Hoy(), id, ct);
     }
 }
