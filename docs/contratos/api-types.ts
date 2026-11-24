@@ -127,8 +127,8 @@ export interface VacanteResumenDto {
   carreras: string[];
   fechaPublicacion: FechaISO;
   fechaCierre: FechaSolo;
-  cumploRequisitos: boolean;   // calculado para el estudiante actual
-  yaPostulado: boolean;
+  cumploRequisitos: boolean;   // perfil con carrera permitida, índice mínimo y todas las habilidades requeridas
+  yaPostulado: boolean;        // cualquier postulación propia, incluso Retirada
 }
 export interface HabilidadVacanteDto { id: Guid; nombre: string; esRequerida: boolean; }
 export interface VacanteDetalleDto extends VacanteResumenDto {
