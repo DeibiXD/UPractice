@@ -15,4 +15,7 @@ public static class MensajesVacantes
     public const string CarrerasDuplicadas = "No repita carreras.";
     public const string HabilidadesInvalidas = "Seleccione habilidades válidas.";
     public const string HabilidadesDuplicadas = "No repita habilidades.";
+    public const string Estado = "Seleccione un estado de vacante válido.";
+    public const string Pagina = "La página debe ser mayor o igual a 1.";
+    public const string TamanoPagina = "El tamaño de página debe estar entre 1 y 50.";
 }

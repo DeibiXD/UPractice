@@ -58,7 +58,13 @@ El catálogo público está en `GET /api/v1/catalogos/universidades`. El registr
 
 **Archivos (T-08):** los PDF se guardan con `IAlmacenamientoArchivos` y la BD solo guarda la llave (`ArchivoKey`, S3.8). Por defecto `Storage:Proveedor=Local`: los archivos quedan en `backend/storage/` (ignorada por git; en Docker, `Storage__RutaLocal=/app/storage` con un volumen) y las descargas usan URL firmadas hacia `GET /api/v1/archivos/local`, válidas 5 minutos. `Storage:UrlBaseLocal` debe ser la URL con la que el navegador llega a la API (`http://localhost:5294` con `dotnet run`, `http://localhost:8080` en Docker). Si no se define `Storage:ClaveFirmaLocal` (Base64, ≥ 32 bytes), se genera una al azar y los enlaces mueren al reiniciar. En Render: `Storage__Proveedor=Supabase`, `Storage__SupabaseUrl`, `Storage__SupabaseClave` (clave *secret* / *service_role*, solo en Render) y `Storage__Bucket=upractice-archivos` (bucket **privado**).
 
-**HU-E03 (backend):** `POST /api/v1/empresa/vacantes` permite crear borradores y publicar con carreras habilitadas para la empresa autenticada. La [guía de prueba](docs/pruebas/HU-E03.md) explica cómo obtener IDs del seed, enviar solicitudes en Swagger y comprobar las respuestas. Los catálogos GET y el panel de HU-E04 se integran por separado.
+**HU-E03 (backend):** `POST /api/v1/empresa/vacantes` permite crear borradores y publicar con carreras habilitadas para la empresa autenticada. La [guía de prueba](docs/pruebas/HU-E03.md) explica cómo obtener IDs del seed, enviar solicitudes en Swagger y comprobar las respuestas. Los catálogos GET se integran como dependencias compartidas.
+
+**HU-E04 (backend):** listado paginado, detalle, edición y cambio de estado de vacantes propias. La [guía de gestión](docs/pruebas/HU-E04.md) describe las cuatro rutas, el vencimiento según Honduras y las comprobaciones de permisos y aislamiento.
+
+**HU-04 (backend):** `GET /api/v1/vacantes` y `GET /api/v1/vacantes/{id}` permiten al estudiante explorar vacantes vigentes de empresas aprobadas en su universidad. La [guía de exploración](docs/pruebas/HU-04.md) describe filtros, paginación e indicadores personalizados.
+
+**HU-E02 (backend):** los endpoints de `/api/v1/empresa/usuarios` permiten al `AdminEmpresa` listar, crear, desactivar y reactivar cuentas de su empresa. La [guía de prueba](docs/pruebas/HU-E02.md) cubre la contraseña temporal, el cambio obligatorio, los permisos y el aislamiento. El formulario y su esquema Zod corresponden a la entrega de frontend.
 
 ### Si Windows bloquea la API ("An application control policy has blocked this file")
 
@@ -74,7 +80,7 @@ docker run --rm -v "${PWD}:/src:ro" -e "PRUEBAS_POSTGRES=Host=host.docker.intern
 
 Migraciones: solo se crean con `dotnet ef migrations add <Nombre> --project src/UPractice.Infrastructure --startup-project src/UPractice.Api --output-dir Persistencia/Migraciones`, después de hacer `git pull` de `main`.
 
-Requiere el SDK de .NET 10 indicado en `backend/global.json` (`dotnet --list-sdks`). Con Docker (T-06): `cp .env.example .env` y `docker compose up --build`.
+Requiere el SDK de .NET 10 indicado en `backend/global.json` (`dotnet --list-sdks`). Con Docker (T-06): `cp example.env .env` y `docker compose up --build`.
 
 ## Equipo
 | Integrante | Rol |

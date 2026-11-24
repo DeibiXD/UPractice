@@ -34,12 +34,12 @@ public sealed class PostulacionesTests(ApiFixture api)
         Assert.Contains("Retirar", Acciones(creada));
 
         // HU-E05: la empresa dueña de la vacante ve al postulante.
-        var lista = await Json(await digital.GetAsync($"/api/v1/empresa/vacantes/{vacanteId}/postulantes"));
+        var lista = await Json(await digital.GetAsync($"/api/v1/empresa/vacantes/{vacanteId}/postulaciones"));
         Assert.Single(lista.EnumerateArray());
         Assert.Equal(id, lista[0].GetProperty("postulacionId").GetGuid());
 
         // Otra empresa: 404 (no 403) en la lista, el detalle y el cambio de estado.
-        Assert.Equal(HttpStatusCode.NotFound, (await finanzas.GetAsync($"/api/v1/empresa/vacantes/{vacanteId}/postulantes")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await finanzas.GetAsync($"/api/v1/empresa/vacantes/{vacanteId}/postulaciones")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await finanzas.GetAsync($"/api/v1/empresa/postulaciones/{id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await CambiarEstado(finanzas, id, "EnRevision")).StatusCode);
 
@@ -58,11 +58,11 @@ public sealed class PostulacionesTests(ApiFixture api)
         Assert.Equal(HttpStatusCode.OK, (await CambiarEstado(digital, id, "Oferta")).StatusCode);
 
         // HU-06: el estudiante ve la oferta y la acepta.
-        var propia = await Json(await estudiante.GetAsync($"/api/v1/postulaciones/{id}"));
+        var propia = await Json(await estudiante.GetAsync($"/api/v1/estudiantes/me/postulaciones/{id}"));
         Assert.Equal("Oferta", propia.GetProperty("estado").GetString());
         Assert.Equal(new[] { "AceptarOferta", "DeclinarOferta" }, Acciones(propia));
 
-        var aceptada = await estudiante.PutAsJsonAsync($"/api/v1/postulaciones/{id}/oferta", new { aceptar = true });
+        var aceptada = await estudiante.PostAsJsonAsync($"/api/v1/estudiantes/me/postulaciones/{id}/respuesta-oferta", new { aceptar = true });
         Assert.Equal(HttpStatusCode.OK, aceptada.StatusCode);
         Assert.Equal("Aceptada", (await Json(aceptada)).GetProperty("estado").GetString());
     }
@@ -77,9 +77,9 @@ public sealed class PostulacionesTests(ApiFixture api)
         var id = await Postular(await Cliente(duena.Correo), vacanteId, duena.CurriculumId);
         var clienteIntruso = await Cliente(intruso.Correo);
 
-        Assert.Equal(HttpStatusCode.NotFound, (await clienteIntruso.GetAsync($"/api/v1/postulaciones/{id}")).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await clienteIntruso.PostAsync($"/api/v1/postulaciones/{id}/retirar", null)).StatusCode);
-        Assert.Empty((await Json(await clienteIntruso.GetAsync("/api/v1/postulaciones"))).EnumerateArray());
+        Assert.Equal(HttpStatusCode.NotFound, (await clienteIntruso.GetAsync($"/api/v1/estudiantes/me/postulaciones/{id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await clienteIntruso.PostAsync($"/api/v1/estudiantes/me/postulaciones/{id}/retirar", null)).StatusCode);
+        Assert.Empty((await Json(await clienteIntruso.GetAsync("/api/v1/estudiantes/me/postulaciones"))).EnumerateArray());
     }
 
     // ---------- Reglas al postularse (HU-05) ----------
@@ -164,11 +164,11 @@ public sealed class PostulacionesTests(ApiFixture api)
         var estudiante = await Cliente(est.Correo);
         var digital = await Cliente(Datos.ReclutadorDigital);
 
-        Assert.Equal(HttpStatusCode.Forbidden, (await digital.GetAsync("/api/v1/postulaciones")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await digital.GetAsync("/api/v1/estudiantes/me/postulaciones")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden,
             (await digital.PostAsJsonAsync($"/api/v1/vacantes/{vacanteId}/postulaciones", new { curriculumId = est.CurriculumId })).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await estudiante.GetAsync($"/api/v1/empresa/vacantes/{vacanteId}/postulantes")).StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, (await api.CreateClient().GetAsync("/api/v1/postulaciones")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await estudiante.GetAsync($"/api/v1/empresa/vacantes/{vacanteId}/postulaciones")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await api.CreateClient().GetAsync("/api/v1/estudiantes/me/postulaciones")).StatusCode);
     }
 
     // ---------- Panel del estudiante (HU-06) ----------
@@ -183,7 +183,7 @@ public sealed class PostulacionesTests(ApiFixture api)
         var digital = await Cliente(Datos.ReclutadorDigital);
         var id = await Postular(estudiante, vacanteId, est.CurriculumId);
 
-        var retirada = await estudiante.PostAsync($"/api/v1/postulaciones/{id}/retirar", null);
+        var retirada = await estudiante.PostAsync($"/api/v1/estudiantes/me/postulaciones/{id}/retirar", null);
         Assert.Equal(HttpStatusCode.OK, retirada.StatusCode);
         var jr = await Json(retirada);
         Assert.Equal("Retirada", jr.GetProperty("estado").GetString());
@@ -196,9 +196,9 @@ public sealed class PostulacionesTests(ApiFixture api)
         Assert.Equal(HttpStatusCode.UnprocessableEntity, (await CambiarEstado(digital, id, "Aceptada")).StatusCode);
 
         // Retirar de nuevo no es una transición válida.
-        Assert.Equal(HttpStatusCode.UnprocessableEntity, (await estudiante.PostAsync($"/api/v1/postulaciones/{id}/retirar", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, (await estudiante.PostAsync($"/api/v1/estudiantes/me/postulaciones/{id}/retirar", null)).StatusCode);
 
-        var reactivada = await estudiante.PostAsJsonAsync($"/api/v1/postulaciones/{id}/reactivar", new { curriculumId = est.CurriculumId });
+        var reactivada = await estudiante.PostAsJsonAsync($"/api/v1/estudiantes/me/postulaciones/{id}/reactivar", new { curriculumId = est.CurriculumId });
         Assert.Equal(HttpStatusCode.OK, reactivada.StatusCode);
         var jv = await Json(reactivada);
         Assert.Equal("Enviada", jv.GetProperty("estado").GetString());
@@ -216,16 +216,16 @@ public sealed class PostulacionesTests(ApiFixture api)
 
         await e.CambiarEstadoVacanteAsync(vacanteId, EstadoVacante.Pausada);
 
-        var panel = await Json(await estudiante.GetAsync("/api/v1/postulaciones"));
+        var panel = await Json(await estudiante.GetAsync("/api/v1/estudiantes/me/postulaciones"));
         Assert.Single(panel.EnumerateArray());
         Assert.Equal(id, panel[0].GetProperty("id").GetGuid());
-        Assert.Equal(HttpStatusCode.OK, (await estudiante.GetAsync($"/api/v1/postulaciones/{id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await estudiante.GetAsync($"/api/v1/estudiantes/me/postulaciones/{id}")).StatusCode);
 
         // Retirar sigue permitido; reactivar no, porque la vacante ya no está disponible.
-        Assert.Equal(HttpStatusCode.OK, (await estudiante.PostAsync($"/api/v1/postulaciones/{id}/retirar", null)).StatusCode);
-        var reactivar = await estudiante.PostAsJsonAsync($"/api/v1/postulaciones/{id}/reactivar", new { curriculumId = est.CurriculumId });
+        Assert.Equal(HttpStatusCode.OK, (await estudiante.PostAsync($"/api/v1/estudiantes/me/postulaciones/{id}/retirar", null)).StatusCode);
+        var reactivar = await estudiante.PostAsJsonAsync($"/api/v1/estudiantes/me/postulaciones/{id}/reactivar", new { curriculumId = est.CurriculumId });
         Assert.Equal("VACANTE_NO_DISPONIBLE", await Code(reactivar));
-        Assert.Empty(Acciones((await Json(await estudiante.GetAsync($"/api/v1/postulaciones/{id}")))));
+        Assert.Empty(Acciones((await Json(await estudiante.GetAsync($"/api/v1/estudiantes/me/postulaciones/{id}")))));
     }
 
     [Fact]
@@ -241,9 +241,9 @@ public sealed class PostulacionesTests(ApiFixture api)
         var id2 = await Postular(estudiante, v2, est.CurriculumId);
         await LlevarAOferta(digital, id1);
 
-        Assert.Equal(HttpStatusCode.OK, (await estudiante.PutAsJsonAsync($"/api/v1/postulaciones/{id1}/oferta", new { aceptar = true })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await estudiante.PostAsJsonAsync($"/api/v1/estudiantes/me/postulaciones/{id1}/respuesta-oferta", new { aceptar = true })).StatusCode);
 
-        var otra = await Json(await estudiante.GetAsync($"/api/v1/postulaciones/{id2}"));
+        var otra = await Json(await estudiante.GetAsync($"/api/v1/estudiantes/me/postulaciones/{id2}"));
         Assert.Equal("Retirada", otra.GetProperty("estado").GetString());
         Assert.Empty(Acciones(otra));   // con una práctica aceptada ya no puede reactivar
 
@@ -263,12 +263,12 @@ public sealed class PostulacionesTests(ApiFixture api)
         var id = await Postular(estudiante, vacanteId, est.CurriculumId);
 
         // Cuerpo vacío: 400, nunca se interpreta como "declinar".
-        var vacio = await estudiante.PutAsJsonAsync($"/api/v1/postulaciones/{id}/oferta", new { });
+        var vacio = await estudiante.PostAsJsonAsync($"/api/v1/estudiantes/me/postulaciones/{id}/respuesta-oferta", new { });
         Assert.Equal(HttpStatusCode.BadRequest, vacio.StatusCode);
         Assert.Equal("Indique si acepta o declina la oferta.", (await Json(vacio)).GetProperty("errors").GetProperty("aceptar")[0].GetString());
 
         // Sin oferta todavía: transición inválida.
-        var sinOferta = await estudiante.PutAsJsonAsync($"/api/v1/postulaciones/{id}/oferta", new { aceptar = true });
+        var sinOferta = await estudiante.PostAsJsonAsync($"/api/v1/estudiantes/me/postulaciones/{id}/respuesta-oferta", new { aceptar = true });
         Assert.Equal("TRANSICION_INVALIDA", await Code(sinOferta));
     }
 
@@ -292,7 +292,7 @@ public sealed class PostulacionesTests(ApiFixture api)
         Assert.Equal(HttpStatusCode.UnprocessableEntity, sinCupo.StatusCode);
         Assert.Equal("SIN_CUPOS", await Code(sinCupo));
 
-        await clienteA.PutAsJsonAsync($"/api/v1/postulaciones/{idA}/oferta", new { aceptar = false });   // declina: libera el cupo
+        await clienteA.PostAsJsonAsync($"/api/v1/estudiantes/me/postulaciones/{idA}/respuesta-oferta", new { aceptar = false });   // declina: libera el cupo
         Assert.Equal(HttpStatusCode.OK, (await CambiarEstado(digital, idB, "Oferta")).StatusCode);   // ya está en EnRevision
     }
 
@@ -309,6 +309,66 @@ public sealed class PostulacionesTests(ApiFixture api)
 
         Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
         Assert.Equal("Máximo 500 caracteres.", (await Json(respuesta)).GetProperty("errors").GetProperty("comentario")[0].GetString());
+    }
+
+    // ---------- Filtros (HU-06, HU-E05) ----------
+
+    [Fact]
+    public async Task Los_listados_se_filtran_por_estado_y_por_cumple_requisitos()
+    {
+        await using var e = new EscenarioPostulaciones(api);
+        var v1 = await e.CrearVacanteAsync(indiceMinimo: 95m);
+        var v2 = await e.CrearVacanteAsync();
+        var bajo = await e.CrearEstudianteAsync(indice: 80m);
+        var alto = await e.CrearEstudianteAsync(indice: 99m);
+        var clienteBajo = await Cliente(bajo.Correo);
+        var digital = await Cliente(Datos.ReclutadorDigital);
+        var idBajo = await Postular(clienteBajo, v1, bajo.CurriculumId);        // no cumple el índice, queda Enviada
+        var idAlto = await Postular(await Cliente(alto.Correo), v1, alto.CurriculumId);
+        var idBajo2 = await Postular(clienteBajo, v2, bajo.CurriculumId);
+        Assert.Equal(HttpStatusCode.OK, (await CambiarEstado(digital, idAlto, "EnRevision")).StatusCode);
+
+        // Empresa (HU-E05): por estado, por cumpleRequisitos y combinados.
+        var baseUrl = $"/api/v1/empresa/vacantes/{v1}/postulaciones";
+        Assert.Equal(new[] { idAlto, idBajo }.Order(), IdsDe(await Json(await digital.GetAsync(baseUrl)), "postulacionId"));
+        Assert.Equal(new[] { idAlto }, IdsDe(await Json(await digital.GetAsync($"{baseUrl}?estado=EnRevision")), "postulacionId"));
+        Assert.Equal(new[] { idAlto }, IdsDe(await Json(await digital.GetAsync($"{baseUrl}?cumpleRequisitos=true")), "postulacionId"));
+        Assert.Equal(new[] { idBajo }, IdsDe(await Json(await digital.GetAsync($"{baseUrl}?cumpleRequisitos=false")), "postulacionId"));
+        Assert.Equal(new[] { idBajo }, IdsDe(await Json(await digital.GetAsync($"{baseUrl}?estado=Enviada&cumpleRequisitos=false")), "postulacionId"));
+        Assert.Empty((await Json(await digital.GetAsync($"{baseUrl}?estado=Rechazada"))).EnumerateArray());
+
+        // Estudiante (HU-06): por estado.
+        Assert.Equal(HttpStatusCode.OK, (await clienteBajo.PostAsync($"/api/v1/estudiantes/me/postulaciones/{idBajo2}/retirar", null)).StatusCode);
+        Assert.Equal(new[] { idBajo2 }, IdsDe(await Json(await clienteBajo.GetAsync("/api/v1/estudiantes/me/postulaciones?estado=Retirada")), "id"));
+        var enviadas = await Json(await clienteBajo.GetAsync("/api/v1/estudiantes/me/postulaciones?estado=Enviada"));
+        Assert.Equal(new[] { idBajo }, IdsDe(enviadas, "id"));
+        Assert.Equal(2, (await Json(await clienteBajo.GetAsync("/api/v1/estudiantes/me/postulaciones"))).GetArrayLength());
+
+        // Un estado que no existe no es un filtro válido.
+        Assert.Equal(HttpStatusCode.BadRequest, (await digital.GetAsync($"{baseUrl}?estado=Inventado")).StatusCode);
+    }
+
+    // ---------- Cupos y concurrencia (HU-E07) ----------
+
+    [Fact]
+    public async Task Dos_ofertas_simultaneas_no_superan_el_cupo()
+    {
+        await using var e = new EscenarioPostulaciones(api);
+        var vacanteId = await e.CrearVacanteAsync(cupos: 1);
+        var a = await e.CrearEstudianteAsync();
+        var b = await e.CrearEstudianteAsync();
+        var digital = await Cliente(Datos.ReclutadorDigital);
+        var idA = await Postular(await Cliente(a.Correo), vacanteId, a.CurriculumId);
+        var idB = await Postular(await Cliente(b.Correo), vacanteId, b.CurriculumId);
+        Assert.Equal(HttpStatusCode.OK, (await CambiarEstado(digital, idA, "EnRevision")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await CambiarEstado(digital, idB, "EnRevision")).StatusCode);
+
+        // Las dos ofertas salen a la vez: solo una puede quedarse con el único cupo.
+        var respuestas = await Task.WhenAll(CambiarEstado(digital, idA, "Oferta"), CambiarEstado(digital, idB, "Oferta"));
+
+        Assert.Single(respuestas, r => r.StatusCode == HttpStatusCode.OK);
+        var rechazada = Assert.Single(respuestas, r => r.StatusCode == HttpStatusCode.UnprocessableEntity);
+        Assert.Equal("SIN_CUPOS", await Code(rechazada));
     }
 
     // ---------- Ayudas ----------
@@ -338,5 +398,11 @@ public sealed class PostulacionesTests(ApiFixture api)
     }
 
     private static Task<HttpResponseMessage> CambiarEstado(HttpClient empresa, Guid id, string nuevoEstado, string? comentario = null) =>
-        empresa.PutAsJsonAsync($"/api/v1/empresa/postulaciones/{id}/estado", new { nuevoEstado, comentario });
+        empresa.SendAsync(new HttpRequestMessage(HttpMethod.Patch, $"/api/v1/empresa/postulaciones/{id}/estado")
+        {
+            Content = JsonContent.Create(new { nuevoEstado, comentario }),
+        });
+
+    private static Guid[] IdsDe(JsonElement lista, string propiedad) =>
+        lista.EnumerateArray().Select(x => x.GetProperty(propiedad).GetGuid()).Order().ToArray();
 }

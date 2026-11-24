@@ -6,11 +6,14 @@ using UPractice.Domain.Reglas;
 
 namespace UPractice.Application.Features.Postulaciones;
 
-/// <summary>GET /empresa/vacantes/{vacanteId}/postulantes (HU-E05). Una vacante de otra empresa responde 404.</summary>
+/// <summary>
+/// GET /empresa/vacantes/{vacanteId}/postulaciones?estado=&amp;cumpleRequisitos= (HU-E05).
+/// Una vacante de otra empresa responde 404.
+/// </summary>
 public sealed class ListarPostulantesHandler(IAppDbContext db)
 {
-    public Task<List<PostulanteResumenDto>> EjecutarAsync(Guid vacanteId, CancellationToken ct) =>
-        ConsultasPostulacion.ListarPostulantesAsync(db, vacanteId, ct);
+    public Task<List<PostulanteResumenDto>> EjecutarAsync(Guid vacanteId, EstadoPostulacion? estado, bool? cumpleRequisitos, CancellationToken ct) =>
+        ConsultasPostulacion.ListarPostulantesAsync(db, vacanteId, estado, cumpleRequisitos, ct);
 }
 
 /// <summary>
@@ -24,14 +27,38 @@ public sealed class ObtenerPostulanteHandler(IAppDbContext db)
 }
 
 /// <summary>
-/// PUT /empresa/postulaciones/{id}/estado (HU-E07). La máquina de estados decide qué saltos puede hacer la empresa;
+/// PATCH /empresa/postulaciones/{id}/estado (HU-E07). La máquina de estados decide qué saltos puede hacer la empresa;
 /// la oferta además necesita un cupo libre de la vacante.
 /// </summary>
-public sealed class CambiarEstadoPostulacionHandler(IAppDbContext db, ICurrentUser actual)
+public sealed class CambiarEstadoPostulacionHandler(IAppDbContext db, ICurrentUser actual, IFechaHonduras fecha)
 {
     public async Task<PostulanteDetalleDto> EjecutarAsync(Guid id, CambiarEstadoPostulacionRequest request, CancellationToken ct)
     {
         var usuarioId = ReglasPostulacion.ExigirUsuario(actual);
+
+        if (request.NuevoEstado == EstadoPostulacion.Oferta)
+        {
+            // La vacante de una postulación ajena no se ve (filtro global): 404 antes de tocar nada.
+            var vacanteId = await db.Postulaciones.Where(p => p.Id == id).Select(p => (Guid?)p.VacanteId).FirstOrDefaultAsync(ct)
+                ?? throw new NoEncontradoException("La postulación no existe.");
+
+            // Dos ofertas simultáneas no pueden pasarse del cupo: la fila de la vacante se bloquea hasta confirmar la transacción,
+            // así la segunda espera y cuenta ya con la primera (READ COMMITTED vuelve a leer en cada consulta).
+            await using var transaccion = await db.BeginTransactionAsync(ct);
+            await db.BloquearVacanteAsync(vacanteId, ct);
+            await CambiarAsync(id, request, usuarioId, ct);
+            await transaccion.CommitAsync(ct);
+        }
+        else
+        {
+            await CambiarAsync(id, request, usuarioId, ct);
+        }
+
+        return await ConsultasPostulacion.DetallePostulanteAsync(db, id, ct);
+    }
+
+    private async Task CambiarAsync(Guid id, CambiarEstadoPostulacionRequest request, Guid usuarioId, CancellationToken ct)
+    {
         var postulacion = await db.Postulaciones.FirstOrDefaultAsync(p => p.Id == id, ct)
             ?? throw new NoEncontradoException("La postulación no existe.");
 
@@ -43,10 +70,8 @@ public sealed class CambiarEstadoPostulacionHandler(IAppDbContext db, ICurrentUs
         var anterior = postulacion.Estado;
         postulacion.Estado = request.NuevoEstado;
         var comentario = string.IsNullOrWhiteSpace(request.Comentario) ? null : request.Comentario.Trim();
-        db.HistorialPostulacion.Add(ReglasPostulacion.NuevoHistorial(postulacion, anterior, request.NuevoEstado, usuarioId, comentario));
+        db.HistorialPostulacion.Add(ReglasPostulacion.NuevoHistorial(postulacion, anterior, request.NuevoEstado, usuarioId, fecha.UtcAhora(), comentario));
         await db.SaveChangesAsync(ct);
-
-        return await ConsultasPostulacion.DetallePostulanteAsync(db, id, ct);
     }
 
     /// <summary>

@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UPractice.Application.Features.Postulaciones;
+using UPractice.Domain.Enums;
 
 namespace UPractice.Api.Controllers;
 
-/// <summary>Postulaciones del estudiante: postularse (HU-05) y su panel (HU-06).</summary>
+/// <summary>Postulaciones del estudiante: postularse (HU-05) y su panel (HU-06). Rutas de S5.5.</summary>
 [ApiController]
-[Route("api/v1/postulaciones")]
+[Route("api/v1/estudiantes/me/postulaciones")]
 [Authorize(Roles = "Estudiante")]
 [Produces("application/json")]
 public sealed class PostulacionesController : ControllerBase
@@ -26,10 +27,12 @@ public sealed class PostulacionesController : ControllerBase
     }
 
     /// <summary>Panel del estudiante: sus postulaciones, la más reciente primero, con las acciones que puede hacer en cada una.</summary>
+    /// <param name="estado">Opcional: solo las postulaciones en ese estado.</param>
     [HttpGet]
     [ProducesResponseType<List<MiPostulacionDto>>(StatusCodes.Status200OK)]
-    public Task<List<MiPostulacionDto>> Listar([FromServices] ListarMisPostulacionesHandler handler, CancellationToken ct)
-        => handler.EjecutarAsync(ct);
+    public Task<List<MiPostulacionDto>> Listar(
+        [FromQuery] EstadoPostulacion? estado, [FromServices] ListarMisPostulacionesHandler handler, CancellationToken ct)
+        => handler.EjecutarAsync(estado, ct);
 
     /// <summary>Detalle de una postulación propia, con su historial.</summary>
     [HttpGet("{id:guid}")]
@@ -57,8 +60,9 @@ public sealed class PostulacionesController : ControllerBase
         => handler.EjecutarAsync(id, request, ct);
 
     /// <summary>Acepta o declina una oferta. Al aceptar, sus demás postulaciones activas se retiran solas.</summary>
-    [HttpPut("{id:guid}/oferta")]
+    [HttpPost("{id:guid}/respuesta-oferta")]
     [ProducesResponseType<MiPostulacionDetalleDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status422UnprocessableEntity)]
     public Task<MiPostulacionDetalleDto> ResponderOferta(
