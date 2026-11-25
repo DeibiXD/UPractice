@@ -2,7 +2,8 @@ import type { Rol } from '@/shared/api/types'
 
 /**
  * Pantalla principal de cada rol después de iniciar sesión (S5.6 del plan).
- * Mientras una pantalla no exista, el rol aterriza en "/".
+ * Mientras una pantalla no exista, el rol aterriza en "/" (InicioPage: tarjetas con las
+ * secciones del menú de su rol, ver src/app/menu.ts).
  * Quien entregue la primera pantalla de un rol cambia SU línea:
  *   Estudiante    → '/vacantes'                (HU-04)
  *   Reclutador    → '/empresa/vacantes'        (HU-E03/E04)
