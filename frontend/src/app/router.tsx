@@ -4,6 +4,7 @@ import {
   rutasPublicas as rutasAuthPublicas,
 } from '@/features/auth'
 import { rutasPrivadas as rutasInicio } from '@/features/inicio'
+import { menu } from '@/app/menu'
 import { RutaProtegida } from '@/shared/auth/RutaProtegida'
 import { Layout } from '@/shared/components/Layout'
 import { PaginaNoEncontrada } from '@/shared/components/PaginaNoEncontrada'
@@ -26,7 +27,7 @@ export const router = createBrowserRouter([
       ...rutasAuthAutenticadas,
 
       {
-        element: <Layout />,
+        element: <Layout menu={menu} />,
         children: [
           ...rutasInicio,
           // FEATURES: ...rutasVacantes, ...rutasEmpresa, ...rutasCoordinacion, ...
