@@ -29,6 +29,7 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
 
     private PostgreSqlContainer? contenedor;
     private string cadenaConexion = null!;
+    private readonly string carpetaArchivos = Path.Combine(Path.GetTempPath(), "upractice-pruebas-" + Guid.NewGuid().ToString("N"));
 
     public async Task InitializeAsync()
     {
@@ -49,6 +50,9 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
         Environment.SetEnvironmentVariable("Seed__SuperAdminPassword", PasswordSuperAdmin);
         Environment.SetEnvironmentVariable("Jwt__ClaveFirma", Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)));
         Environment.SetEnvironmentVariable("Jwt__ClaveCifrado", Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)));
+        // T-08: proveedor local en una carpeta temporal (se borra al terminar).
+        Environment.SetEnvironmentVariable("Storage__Proveedor", "Local");
+        Environment.SetEnvironmentVariable("Storage__RutaLocal", carpetaArchivos);
 
         // Fuerza el arranque del host: aplica la migración y el seed.
         _ = Server;
@@ -90,6 +94,7 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
             await db.Database.EnsureDeletedAsync();
         await base.DisposeAsync();
         if (contenedor is not null) await contenedor.DisposeAsync();
+        if (Directory.Exists(carpetaArchivos)) Directory.Delete(carpetaArchivos, recursive: true);
     }
 }
 
