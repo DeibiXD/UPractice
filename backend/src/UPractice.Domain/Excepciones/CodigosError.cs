@@ -19,6 +19,7 @@ public static class CodigosError
     public const string CorreoNoInstitucional = "CORREO_NO_INSTITUCIONAL";
     public const string PerfilNoVerificado = "PERFIL_NO_VERIFICADO";
     public const string PerfilVerificadoInmutable = "PERFIL_VERIFICADO_INMUTABLE";
+    public const string PerfilIncompleto = "PERFIL_INCOMPLETO";
     public const string CarreraNoElegible = "CARRERA_NO_ELEGIBLE";
     public const string VacanteNoDisponible = "VACANTE_NO_DISPONIBLE";
     public const string PracticaYaAceptada = "PRACTICA_YA_ACEPTADA";

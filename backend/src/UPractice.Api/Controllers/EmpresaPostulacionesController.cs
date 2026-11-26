@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UPractice.Application.Comun.Contratos;
+using UPractice.Application.Features.Curriculums;
 using UPractice.Application.Features.Postulaciones;
 using UPractice.Domain.Enums;
 
@@ -28,6 +30,14 @@ public sealed class EmpresaPostulacionesController : ControllerBase
     [ProducesResponseType<PostulanteDetalleDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public Task<PostulanteDetalleDto> Detalle(Guid id, [FromServices] ObtenerPostulanteHandler handler, CancellationToken ct)
+        => handler.EjecutarAsync(id, ct);
+
+    /// <summary>URL firmada (5 minutos) del CV adjunto a la postulación, aunque el estudiante lo haya eliminado después.</summary>
+    [HttpGet("postulaciones/{id:guid}/curriculum/descarga")]
+    [ProducesResponseType<UrlDescargaDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public Task<UrlDescargaDto> DescargarCurriculum(
+        Guid id, [FromServices] DescargarCurriculumPostulacionHandler handler, CancellationToken ct)
         => handler.EjecutarAsync(id, ct);
 
     /// <summary>Cambia el estado a EnRevision, Entrevista, Oferta o Rechazada, con un comentario opcional.</summary>

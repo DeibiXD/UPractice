@@ -1,3 +1,6 @@
+import { menu as menuCoordinacion } from '@/features/coordinacion'
+import { menu as menuCurriculums } from '@/features/curriculums'
+import { menu as menuPerfil } from '@/features/perfil'
 import type { ItemMenu } from '@/shared/navegacion/menu'
 
 /**
@@ -14,6 +17,9 @@ import type { ItemMenu } from '@/shared/navegacion/menu'
  * muestran solo las entradas del rol del usuario.
  */
 export const menu: ItemMenu[] = [
+  ...menuPerfil,
+  ...menuCurriculums,
+  ...menuCoordinacion,
   // ...menuVacantes,
   // ...menuPostulaciones,
 ]

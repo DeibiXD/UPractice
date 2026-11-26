@@ -76,6 +76,7 @@ export interface CarreraDto { id: Guid; nombre: string; facultad: string; univer
 export interface HabilidadDto { id: Guid; nombre: string; }
 
 // ===== Perfil del estudiante =====
+// PUT /estudiantes/me/privacidad → 204; sin perfil académico → 422 PERFIL_INCOMPLETO.
 export interface PrivacidadDto { mostrarIndice: boolean; }
 export interface PerfilEstudianteDto {
   usuarioId: Guid;
@@ -96,6 +97,7 @@ export interface ActualizarPerfilAcademicoRequest {   // solo si estado ≠ Veri
   carreraId: Guid;
   indiceAcademico: number;
 }
+// PUT /estudiantes/me/habilidades → PerfilEstudianteDto (se permite aunque el perfil esté Verificado).
 export interface ActualizarHabilidadesRequest {
   habilidadesIds: Guid[];
 }
