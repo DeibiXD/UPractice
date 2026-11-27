@@ -34,3 +34,8 @@ jobs:
 
       - name: Verificar compilación
         run: dotnet build UPractice.slnx --configuration Release --no-restore
+
+      # Pruebas de integración contra PostgreSQL real (Testcontainers usa el Docker del runner),
+      # incluidas las de aislamiento entre empresas (AislamientoTests).
+      - name: Ejecutar pruebas
+        run: dotnet test UPractice.slnx --configuration Release --no-build

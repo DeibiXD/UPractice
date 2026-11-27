@@ -1,0 +1,69 @@
+name: Docker Compose (sistema completo)
+
+# Comprueba lo que pide la Fase 4: con un solo comando se levantan BD + API + frontend
+# a partir de los Dockerfile multi-stage, y los tres servicios responden.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "docker-compose.yml"
+      - "example.env"
+      - ".github/workflows/docker-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "docker-compose.yml"
+      - "example.env"
+      - ".github/workflows/docker-ci.yml"
+
+jobs:
+  compose:
+    name: Levantar docker compose
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      # .env de prueba a partir de la plantilla: contraseñas aleatorias de un solo uso (no son secretos del proyecto).
+      - name: Preparar .env de prueba
+        run: |
+          cp example.env .env
+          clave() { echo "Ci$(openssl rand -hex 8)9Z"; }
+          sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(clave)/" .env
+          sed -i "s/^SUPERADMIN_PASSWORD=.*/SUPERADMIN_PASSWORD=$(clave)/" .env
+          sed -i "s/^DEMO_PASSWORD=.*/DEMO_PASSWORD=$(clave)/" .env
+          docker compose config --quiet
+
+      - name: docker compose up --build (espera a que los 3 servicios estén healthy)
+        run: docker compose up --build --detach --wait --wait-timeout 300
+
+      - name: Comprobar API, frontend y CORS
+        run: |
+          set -e
+          curl --fail --silent http://localhost:8080/health
+          echo
+          curl --fail --silent --output /dev/null http://localhost:3000/
+          # Rutas internas de la SPA (nginx devuelve index.html).
+          curl --fail --silent --output /dev/null http://localhost:3000/estudiante/perfil
+          # Catálogo público servido desde la BD con los datos de demostración.
+          curl --fail --silent http://localhost:8080/api/v1/catalogos/universidades | grep -q '"siglas":"UNAH"'
+          # El frontend de Docker (localhost:3000) puede llamar a la API.
+          curl --fail --silent --include --request OPTIONS http://localhost:8080/api/v1/auth/login \
+            --header "Origin: http://localhost:3000" \
+            --header "Access-Control-Request-Method: POST" \
+            --header "Access-Control-Request-Headers: content-type" | grep -qi "access-control-allow-origin: http://localhost:3000"
+          docker images --format '{{.Repository}}: {{.Size}}' | grep upractice
+
+      - name: Logs si algo falla
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Apagar
+        if: always()
+        run: docker compose down --volumes
