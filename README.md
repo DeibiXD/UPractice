@@ -52,20 +52,27 @@ docker compose config --quiet
 docker compose up --build
 ```
 
-Abre **http://localhost:8080/swagger**. La API espera a que PostgreSQL esté disponible,
+Un solo comando levanta **el sistema completo**: PostgreSQL, la API y el frontend compilado
+(servido por nginx). Abre **http://localhost:3000** para la aplicación y
+**http://localhost:8080/swagger** para la API. La API espera a que PostgreSQL esté disponible,
 aplica la migración existente y carga el seed. Puedes iniciar sesión con
 `admin@digitales.example.com` y tu `DEMO_PASSWORD`, o con `admin@upractice.app`
 y tu `SUPERADMIN_PASSWORD` (esta última cuenta requiere cambiar la contraseña).
 
-La API se publica en `127.0.0.1:8080` y PostgreSQL en `127.0.0.1:5433`;
-los puertos se ajustan con `API_PORT` y `POSTGRES_PORT` en `.env`.
+El frontend se publica en `127.0.0.1:3000`, la API en `127.0.0.1:8080` y PostgreSQL en `127.0.0.1:5433`;
+los puertos se ajustan con `WEB_PORT`, `API_PORT` y `POSTGRES_PORT` en `.env` (si cambias `API_PORT`,
+vuelve a construir con `--build`: la URL de la API queda dentro del build del frontend).
+Para desarrollar el frontend con recarga en caliente sigue usando `npm run dev` (puerto 5173).
 Para DBeaver: base `upractice`, usuario `upractice` y contraseña `POSTGRES_PASSWORD`.
 El contenedor manual `upractice-pg` de los pasos siguientes utiliza otro puerto y volumen.
 
 `docker compose down` detiene este entorno. **La BD de Compose es temporal (`tmpfs`):
 sus datos se pierden al detener el contenedor de PostgreSQL.** En el siguiente arranque
-se reconstruyen la BD y los datos demo. El volumen de archivos se conserva;
-su proveedor funcional corresponde a T-08, todavía separado de esta entrega.
+se reconstruyen la BD y los datos demo. El volumen de archivos (PDF de T-08) se conserva.
+
+**CI (GitHub Actions):** en cada PR y en cada push a `main`, `backend-ci.yml` compila y corre todas las
+pruebas (PostgreSQL real con Testcontainers), `frontend-ci.yml` corre lint, pruebas y build, y
+`docker-ci.yml` levanta este mismo `docker compose` y comprueba que la API, el frontend y CORS respondan.
 
 La [guía de verificación de T-06](docs/pruebas/T-06.md) detalla el arranque,
 las pruebas de persistencia y cómo comprobar la ejecución sin privilegios.

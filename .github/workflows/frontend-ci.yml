@@ -34,5 +34,11 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
+      - name: Lint (incluye el aislamiento entre features)
+        run: npm run lint
+
+      - name: Pruebas (esquemas Zod, extractor de errores, navegación)
+        run: npm test
+
       - name: Verificar compilación
         run: npm run build
