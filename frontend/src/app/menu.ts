@@ -1,3 +1,4 @@
+import { menu as menuPostulaciones } from '@/features/postulaciones'
 import type { ItemMenu } from '@/shared/navegacion/menu'
 
 /**
@@ -15,5 +16,5 @@ import type { ItemMenu } from '@/shared/navegacion/menu'
  */
 export const menu: ItemMenu[] = [
   // ...menuVacantes,
-  // ...menuPostulaciones,
+  ...menuPostulaciones,
 ]
