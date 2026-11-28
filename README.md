@@ -77,6 +77,10 @@ pruebas (PostgreSQL real con Testcontainers), `frontend-ci.yml` corre lint, prue
 La [guía de verificación de T-06](docs/pruebas/T-06.md) detalla el arranque,
 las pruebas de persistencia y cómo comprobar la ejecución sin privilegios.
 
+Para probar a mano el flujo de postulaciones (estudiante y empresa) sigue la
+[guía de postulaciones](docs/pruebas/frontend-postulaciones.md); necesita también la rama del backend
+con los currículums.
+
 ## Correr el backend con .NET local
 
 ```bash
