@@ -1,3 +1,4 @@
+import { menu as menuAdmin } from '@/features/admin'
 import type { ItemMenu } from '@/shared/navegacion/menu'
 
 /**
@@ -14,6 +15,7 @@ import type { ItemMenu } from '@/shared/navegacion/menu'
  * muestran solo las entradas del rol del usuario.
  */
 export const menu: ItemMenu[] = [
+  ...menuAdmin,
   // ...menuVacantes,
   // ...menuPostulaciones,
 ]
