@@ -447,8 +447,9 @@ credenciales*.md
 # JetBrains
 .idea/
 
-# Archivos subidos en desarrollo
+# Archivos subidos en desarrollo (T-08: con dotnet run la carpeta queda junto al proyecto de la API)
 backend/storage/
+backend/src/UPractice.Api/storage/
 
 # Archivos locales de Codex
 /.codex/

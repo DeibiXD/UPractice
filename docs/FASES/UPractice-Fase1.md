@@ -979,7 +979,7 @@ El middleware global traduce todas las excepciones a este formato; el **extracto
 | :---- | :---- | :---- | :---- |
 | GET | `/estudiantes/me/perfil` | → `PerfilEstudianteDto` | HU-02 |
 | PUT | `/estudiantes/me/perfil/academico` | `ActualizarPerfilAcademicoRequest` → `PerfilEstudianteDto` | HU-02 |
-| PUT | `/estudiantes/me/perfil/personal` | `ActualizarPerfilPersonalRequest` → `PerfilEstudianteDto` | HU-02 |
+| PUT | `/estudiantes/me/habilidades` | `ActualizarHabilidadesRequest` → `PerfilEstudianteDto` (ERD v4: reemplaza `/perfil/personal`) | HU-02 |
 | PUT | `/estudiantes/me/privacidad` | `PrivacidadDto` → 204 | HU-02 |
 | GET | `/estudiantes/me/curriculums` | → `CurriculumDto[]` | HU-03 |
 | POST | `/estudiantes/me/curriculums` | multipart: `archivo`, `nombreVersion` → 201 `CurriculumDto` | HU-03 |
