@@ -3,6 +3,7 @@ import {
   rutasAutenticadas as rutasAuthAutenticadas,
   rutasPublicas as rutasAuthPublicas,
 } from '@/features/auth'
+import { rutasPrivadas as rutasAdmin } from '@/features/admin'
 import { rutasPrivadas as rutasInicio } from '@/features/inicio'
 import { menu } from '@/app/menu'
 import { RutaProtegida } from '@/shared/auth/RutaProtegida'
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
         element: <Layout menu={menu} />,
         children: [
           ...rutasInicio,
+          ...rutasAdmin,
           // FEATURES: ...rutasVacantes, ...rutasEmpresa, ...rutasCoordinacion, ...
         ],
       },
